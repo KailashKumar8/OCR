@@ -10,9 +10,11 @@ services:
     autoDeploy: true
     envVars:
       - key: OCR_PROVIDER
-        value: openai
+        value: nvidia
       - key: OCR_MODEL
-        value: gpt-4.1
+        value: nvidia/llama-3.1-nemotron-nano-vl-8b-v1
+      - key: OCR_API_URL
+        value: https://integrate.api.nvidia.com/v1/chat/completions
       - key: OCR_ENGINE
         value: openai
       - key: OCR_API_KEY
