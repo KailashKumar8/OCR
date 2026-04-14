@@ -1,0 +1,39 @@
+{
+  "dataset_path": "train_data",
+  "output_path": "models\\smoke_document_classifier.pt",
+  "device": "cpu",
+  "class_names": [
+    "Email",
+    "Letter",
+    "Note"
+  ],
+  "image_size": 96,
+  "epochs": 1,
+  "batch_size": 16,
+  "learning_rate": 0.001,
+  "weight_decay": 0.0001,
+  "val_split": 0.2,
+  "seed": 42,
+  "train_class_counts": {
+    "Email": 24,
+    "Letter": 24,
+    "Note": 24
+  },
+  "best_val_accuracy": 0.3333333333333333,
+  "final_val_loss": 1.0967762470245361,
+  "final_val_accuracy": 0.3333333333333333,
+  "per_class_accuracy": {
+    "Email": 0.0,
+    "Letter": 1.0,
+    "Note": 0.0
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.085920148425632,
+      "train_accuracy": 0.3888888888888889,
+      "val_loss": 1.0967762470245361,
+      "val_accuracy": 0.3333333333333333
+    }
+  ]
+}

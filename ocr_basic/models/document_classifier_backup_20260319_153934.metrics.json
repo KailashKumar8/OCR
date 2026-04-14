@@ -1,0 +1,67 @@
+{
+  "dataset_path": "train_data",
+  "output_path": "models\\document_classifier.pt",
+  "device": "cpu",
+  "class_names": [
+    "Email",
+    "Letter",
+    "Note"
+  ],
+  "image_size": 128,
+  "epochs": 5,
+  "batch_size": 32,
+  "learning_rate": 0.001,
+  "weight_decay": 0.0001,
+  "val_split": 0.2,
+  "seed": 42,
+  "train_class_counts": {
+    "Email": 479,
+    "Letter": 454,
+    "Note": 161
+  },
+  "best_val_accuracy": 0.9084249084249084,
+  "final_val_loss": 0.38516292685554143,
+  "final_val_accuracy": 0.9084249084249084,
+  "per_class_accuracy": {
+    "Email": 0.85,
+    "Letter": 0.9911504424778761,
+    "Note": 0.85
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.9095592232901174,
+      "train_accuracy": 0.6828153564899452,
+      "val_loss": 1.3342862950139867,
+      "val_accuracy": 0.4981684981684982
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.6725297179039044,
+      "train_accuracy": 0.7477148080438757,
+      "val_loss": 1.2166607598245363,
+      "val_accuracy": 0.7289377289377289
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.5508267835627091,
+      "train_accuracy": 0.79981718464351,
+      "val_loss": 2.751538324268746,
+      "val_accuracy": 0.15384615384615385
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.4545121071434544,
+      "train_accuracy": 0.8418647166361974,
+      "val_loss": 0.569684936886742,
+      "val_accuracy": 0.7765567765567766
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.43462281182435575,
+      "train_accuracy": 0.8546617915904936,
+      "val_loss": 0.38516292685554143,
+      "val_accuracy": 0.9084249084249084
+    }
+  ]
+}

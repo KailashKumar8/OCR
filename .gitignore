@@ -1,0 +1,23 @@
+# Python bytecode and logs
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.log
+
+# Virtual environments
+venv/
+.venv/
+ocr_basic/venv/
+ocr_basic/.venv/
+
+# Local outputs and runtime artifacts
+ocr_basic/uploads/
+ocr_basic/outputs/
+ocr_basic/__pycache__/
+ocr_basic/server_stdout.log
+ocr_basic/server_stderr.log
+
+# Large local datasets not needed for Render runtime
+ocr_basic/train_data/
+ocr_basic/train_data_merged/

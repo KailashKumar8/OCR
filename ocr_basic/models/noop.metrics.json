@@ -1,0 +1,31 @@
+{
+  "dataset_path": "train_data",
+  "output_path": "models\\noop.pt",
+  "device": "cpu",
+  "class_names": [
+    "Email",
+    "Letter",
+    "Note"
+  ],
+  "image_size": 128,
+  "epochs": 0,
+  "batch_size": 32,
+  "learning_rate": 0.001,
+  "weight_decay": 0.0001,
+  "val_split": 0.2,
+  "seed": 42,
+  "train_class_counts": {
+    "Email": 479,
+    "Letter": 454,
+    "Note": 161
+  },
+  "best_val_accuracy": -1.0,
+  "final_val_loss": 1.0980599961438022,
+  "final_val_accuracy": 0.43956043956043955,
+  "per_class_accuracy": {
+    "Email": 1.0,
+    "Letter": 0.0,
+    "Note": 0.0
+  },
+  "history": []
+}

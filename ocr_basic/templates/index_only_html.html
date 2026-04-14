@@ -1,0 +1,276 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum OCR Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Kalam:wght@400;700&family=Orbitron:wght@500;700;800&family=Patrick+Hand&family=Rajdhani:wght@400;500;700&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient"></div>
+  <div class="grid-overlay"></div>
+
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <h2 style="margin:0 0 6px; font-family:'Orbitron', sans-serif; letter-spacing:0.06em; text-transform:uppercase; font-size:1.05rem;">Scanning Document</h2>
+      <p style="margin:0; color:var(--muted); line-height:1.6;">OCR pipeline is processing your file, building previews, and preparing the final report.</p>
+    </div>
+  </div>
+
+  <main class="app">
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <span class="badge"><span class="dot"></span> Neural OCR Control Hub</span>
+          <h1 class="title">Quantum <strong>OCR</strong> Deck</h1>
+          <p class="sub">High-clarity document extraction interface with scan-grade visuals, live file preview, text metrics, comparison panels, and export-ready report output.</p>
+        </div>
+        <div class="hero-cards">
+          <div class="hero-card">
+            <strong>Adaptive Pipeline</strong>
+            <p>Original, preprocessed, and OCR result views are aligned in a single comparison lane.</p>
+          </div>
+          <div class="hero-card">
+            <strong>Cloud OCR Runtime</strong>
+            <p>Engine telemetry is shown in real time with processing time and confidence metadata.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <article class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Input Channel</h2>
+          <span class="live-chip">System Online</span>
+        </div>
+
+        <div class="panel-body">
+          <form action="/upload" method="POST" enctype="multipart/form-data" id="ocrForm">
+            <div class="upload-zone" id="uploadArea">
+              <div class="upload-glyph">+</div>
+              <p class="upload-title">Drop image here or select from disk</p>
+              <p class="upload-sub">Accepted formats: PNG, JPG, JPEG. Sharper scans produce better OCR quality.</p>
+
+              <div class="button-row">
+                <label for="fileInput" class="btn btn-secondary">Choose File</label>
+                <button type="submit" class="btn btn-primary">Run OCR Scan</button>
+              </div>
+
+              <input id="fileInput" class="file-input" type="file" name="file" accept=".png,.jpg,.jpeg" required>
+              <div class="file-name" id="fileName">No file selected</div>
+              <div class="error-hint" id="fileError">Please choose a valid image file first.</div>
+            </div>
+          </form>
+
+          <div class="preview-wrap" id="previewWrap">
+            <div class="frame">
+              <div class="frame-label">Selected Preview</div>
+              <a href="#" target="_blank" rel="noopener noreferrer" id="previewLink" class="image-link">
+                <img id="previewImage" alt="Selected file preview">
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer" id="previewOpen" class="open-full">Open Full Image</a>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Extracted Output</h2>
+          <div class="action-row">
+            <button type="button" class="btn btn-manual-main" id="editToggleBtn">Manual Edit</button>
+            <button type="button" class="btn btn-secondary is-hidden" id="resetTextBtn">Reset Text</button>
+            <button type="button" class="btn btn-accent" id="copyBtn">Copy Text</button>
+            <a
+              class="btn btn-download {{ 'is-hidden' if not report_file else '' }}"
+              href="{{ '/uploads/' + report_file if report_file else '#' }}"
+              download
+              aria-disabled="{{ 'false' if report_file else 'true' }}"
+            >Download PDF</a>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <div class="result-box {{ 'result-empty' if not text else '' }}" id="resultText" contenteditable="false" spellcheck="true">{{ text if text else 'Extracted text will appear here after you run OCR.' }}</div>
+
+          <div class="manual-bar">
+            <span class="manual-pill">Manual correction mode: edit OCR text before copy/export.</span>
+            <span class="manual-pill" id="editStateLabel">Read Only</span>
+          </div>
+
+          <div class="style-lab">
+            <p class="style-title">Style Lab | Match My Handwriting</p>
+            <div class="style-grid">
+              <div class="style-item">
+                <label for="fontSelect">Handwriting Font</label>
+                <select id="fontSelect">
+                  <option value="Caveat">Caveat</option>
+                  <option value="Kalam">Kalam</option>
+                  <option value="Patrick Hand">Patrick Hand</option>
+                  <option value="Shadows Into Light">Shadows Into Light</option>
+                </select>
+              </div>
+              <div class="style-item">
+                <label for="inkColorPicker">Ink Color</label>
+                <input type="color" id="inkColorPicker" value="#1f3550">
+              </div>
+              <div class="style-item">
+                <label for="sampleUpload">User Handwriting Samples</label>
+                <input type="file" id="sampleUpload" accept=".png,.jpg,.jpeg" multiple>
+              </div>
+              <div class="style-item">
+                <label for="sizeRange">Font Size</label>
+                <input id="sizeRange" type="range" min="24" max="72" value="40">
+                <div class="style-value" id="sizeValue">40 px</div>
+              </div>
+              <div class="style-item">
+                <label for="slantRange">Slant</label>
+                <input id="slantRange" type="range" min="-20" max="20" value="-4">
+                <div class="style-value" id="slantValue">-4 deg</div>
+              </div>
+              <div class="style-item">
+                <label for="lineGapRange">Line Gap</label>
+                <input id="lineGapRange" type="range" min="28" max="70" value="44">
+                <div class="style-value" id="lineGapValue">44 px</div>
+              </div>
+              <div class="style-item">
+                <label for="jitterRange">Stroke Jitter</label>
+                <input id="jitterRange" type="range" min="0" max="8" value="1">
+                <div class="style-value" id="jitterValue">1.0</div>
+              </div>
+              <div class="style-item">
+                <label for="opacityRange">Ink Opacity</label>
+                <input id="opacityRange" type="range" min="35" max="100" value="92">
+                <div class="style-value" id="opacityValue">92 %</div>
+              </div>
+              <div class="style-item">
+                <label for="weightRange">Stroke Weight</label>
+                <input id="weightRange" type="range" min="400" max="800" step="50" value="700">
+                <div class="style-value" id="weightValue">700</div>
+              </div>
+            </div>
+
+            <div class="style-actions">
+              <button type="button" class="mini-btn primary" id="matchStyleBtn">Match From Samples</button>
+              <button type="button" class="mini-btn warn" id="applyToImageBtn">Apply Edits To Image</button>
+              <button type="button" class="mini-btn" id="saveVersionBtn">Save Version</button>
+              <button type="button" class="mini-btn" id="undoVersionBtn">Undo</button>
+              <button type="button" class="mini-btn" id="redoVersionBtn">Redo</button>
+              <span class="status-note" id="styleStatus">Ready for manual tuning.</span>
+            </div>
+
+            <div class="history-box">
+              <div class="history-head">
+                <span>Edit Timeline</span>
+                <span id="historyCount">0 versions</span>
+              </div>
+              <div class="history-list" id="historyList"></div>
+            </div>
+
+            <div class="diff-chip">Changed From OCR: <span id="changeCount">0 words</span></div>
+          </div>
+
+          <div class="strip {{ 'is-hidden' if not document_type else '' }}">
+            <div>
+              <span>Document Type Prediction</span>
+              <strong>{{ document_type }}</strong>
+            </div>
+            <div class="confidence">{{ '%.1f%% confidence'|format(document_confidence * 100) if document_confidence is not none else '' }}</div>
+          </div>
+
+          <div class="strip">
+            <div>
+              <span>OCR Service</span>
+              <strong>Secure OCR Service</strong>
+            </div>
+            <div class="confidence">{{ '%.2fs'|format(processing_seconds) if processing_seconds is not none else '' }}</div>
+          </div>
+
+          <div class="time-banner">
+            <span>Processing Time</span>
+            <strong>{{ '%.2f seconds'|format(processing_seconds) if processing_seconds is not none else 'Waiting for scan...' }}</strong>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <strong id="charCount">0</strong>
+              <span>Characters</span>
+            </div>
+            <div class="stat">
+              <strong id="wordCount">0</strong>
+              <span>Words</span>
+            </div>
+            <div class="stat">
+              <strong id="lineCount">0</strong>
+              <span>Lines</span>
+            </div>
+            <div class="stat">
+              <strong id="timeUsed">{{ '%.2fs'|format(processing_seconds) if processing_seconds is not none else '--' }}</strong>
+              <span>Time Used</span>
+            </div>
+          </div>
+
+          <div class="comparison {{ 'is-hidden' if not image else '' }}">
+            <h3 style="margin:14px 0 0; font-family:'Orbitron', sans-serif; letter-spacing:0.06em; text-transform:uppercase; font-size:0.92rem;">Image Comparison</h3>
+            <p class="comparison-note">Review original upload, preprocessed frame, and OCR-annotated output in one view.</p>
+
+            <div class="comparison-grid">
+              <div class="frame">
+                <div class="frame-label">Original</div>
+                <a href="{{ '/uploads/' + original_image if original_image else '#' }}" target="_blank" rel="noopener noreferrer" class="image-link">
+                  <img src="{{ '/uploads/' + original_image if original_image else '' }}" alt="Original uploaded image">
+                </a>
+                <a href="{{ '/uploads/' + original_image if original_image else '#' }}" target="_blank" rel="noopener noreferrer" class="open-full">Open Full Image</a>
+              </div>
+
+              <div class="frame">
+                <div class="frame-label">Preprocessed</div>
+                <a href="{{ '/uploads/' + preprocessed_image if preprocessed_image else '#' }}" target="_blank" rel="noopener noreferrer" class="image-link">
+                  <img src="{{ '/uploads/' + preprocessed_image if preprocessed_image else '' }}" alt="Preprocessed OCR image">
+                </a>
+                <a href="{{ '/uploads/' + preprocessed_image if preprocessed_image else '#' }}" target="_blank" rel="noopener noreferrer" class="open-full">Open Full Image</a>
+              </div>
+
+              <div class="frame">
+                <div class="frame-label">OCR Annotated</div>
+                <a href="{{ '/uploads/' + image if image else '#' }}" target="_blank" rel="noopener noreferrer" class="image-link">
+                  <img id="annotatedImageView" src="{{ '/uploads/' + image if image else '' }}" alt="OCR annotated output">
+                </a>
+                <a href="{{ '/uploads/' + image if image else '#' }}" target="_blank" rel="noopener noreferrer" class="open-full">Open Full Image</a>
+              </div>
+
+              <div class="frame">
+                <div class="frame-label">Edited Handwriting Preview</div>
+                <a href="#" target="_blank" rel="noopener noreferrer" id="editedPreviewOpen" class="image-link">
+                  <div class="canvas-wrap">
+                    <canvas id="editedTextCanvas" width="980" height="620" aria-label="Edited handwriting preview"></canvas>
+                  </div>
+                </a>
+                <a href="#" id="downloadEditedImage" class="open-full" download="edited_handwriting_preview.png">Download Edited Preview</a>
+              </div>
+
+              <div class="frame">
+                <div class="frame-label">Applied Edits On OCR Image</div>
+                <a href="#" target="_blank" rel="noopener noreferrer" id="appliedPreviewOpen" class="image-link">
+                  <div class="canvas-wrap">
+                    <canvas id="appliedImageCanvas" width="980" height="620" aria-label="Applied edits image preview"></canvas>
+                  </div>
+                </a>
+                <a href="#" id="downloadAppliedImage" class="open-full" download="ocr_with_manual_edits.png">Download Applied Image</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
+

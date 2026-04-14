@@ -1,0 +1,2047 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum OCR Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Kalam:wght@400;700&family=Orbitron:wght@500;700;800&family=Patrick+Hand&family=Rajdhani:wght@400;500;700&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+  <style>
+:root {
+      --bg-0: #03060d;
+      --bg-1: #081024;
+      --bg-2: #071a2b;
+      --panel: rgba(8, 18, 42, 0.72);
+      --panel-strong: rgba(7, 15, 34, 0.86);
+      --line: rgba(117, 249, 255, 0.28);
+      --line-strong: rgba(117, 249, 255, 0.5);
+      --text: #eef7ff;
+      --muted: #9db4d8;
+      --cyan: #75f9ff;
+      --teal: #5deac7;
+      --amber: #ffc87c;
+      --rose: #ff8a8a;
+      --ok: #a8ff79;
+      --shadow: 0 26px 64px rgba(0, 0, 0, 0.5);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --ease: 220ms ease;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+    }
+
+    body {
+      font-family: "Rajdhani", "Trebuchet MS", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% -4%, rgba(117, 249, 255, 0.17), transparent 34%),
+        radial-gradient(circle at 95% 8%, rgba(255, 200, 124, 0.13), transparent 30%),
+        radial-gradient(circle at 50% 120%, rgba(93, 234, 199, 0.11), transparent 35%),
+        linear-gradient(160deg, var(--bg-0), var(--bg-1) 42%, var(--bg-2));
+      overflow-x: hidden;
+    }
+
+    .ambient {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .ambient::before,
+    .ambient::after {
+      content: "";
+      position: absolute;
+      width: 540px;
+      height: 540px;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.24;
+      animation: drift 14s ease-in-out infinite alternate;
+    }
+
+    .ambient::before {
+      left: -170px;
+      top: -180px;
+      background: #6ffff0;
+    }
+
+    .ambient::after {
+      right: -180px;
+      bottom: -180px;
+      background: #ffad7d;
+      animation-delay: 1.4s;
+    }
+
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(117, 249, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(117, 249, 255, 0.045) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(circle at 50% 45%, black 28%, transparent 86%);
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(1340px, calc(100% - 28px));
+      margin: 18px auto;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-xl);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)),
+        rgba(3, 10, 24, 0.82);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      backdrop-filter: blur(14px);
+      animation: rise 620ms ease;
+    }
+
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(120deg, rgba(117, 249, 255, 0.08), transparent 36%),
+        linear-gradient(300deg, rgba(255, 200, 124, 0.08), transparent 34%);
+    }
+
+    .hero {
+      position: relative;
+      padding: 28px 28px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+      background:
+        linear-gradient(140deg, rgba(117, 249, 255, 0.1), transparent 40%),
+        linear-gradient(220deg, rgba(255, 200, 124, 0.08), transparent 42%);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 22px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(117, 249, 255, 0.45);
+      background: rgba(117, 249, 255, 0.09);
+      color: var(--cyan);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 0.73rem;
+      font-family: "Orbitron", sans-serif;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 14px rgba(168, 255, 121, 0.8);
+      animation: pulse 1.6s ease infinite;
+    }
+
+    .title {
+      margin: 14px 0 8px;
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.06em;
+      line-height: 0.95;
+      text-transform: uppercase;
+      font-size: clamp(2rem, 5vw, 4rem);
+      text-shadow: 0 0 22px rgba(117, 249, 255, 0.35);
+    }
+
+    .title strong {
+      color: var(--cyan);
+      font-weight: 800;
+    }
+
+    .sub {
+      margin: 0;
+      max-width: 740px;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+
+    .hero-cards {
+      display: grid;
+      gap: 10px;
+    }
+
+    .hero-card {
+      position: relative;
+      padding: 14px 14px 14px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: linear-gradient(145deg, rgba(9, 18, 40, 0.86), rgba(6, 12, 30, 0.82));
+      overflow: hidden;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      left: -35%;
+      top: 0;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(117, 249, 255, 0.24), transparent);
+      transform: skewX(-18deg);
+      animation: sweep 3.8s linear infinite;
+      pointer-events: none;
+    }
+
+    .hero-card strong {
+      display: block;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.09em;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .hero-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 0.92fr 1.08fr;
+      gap: 18px;
+      padding: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 16px 42px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      animation: rise 620ms ease;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 16px 18px;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-family: "Orbitron", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.95rem;
+    }
+
+    .live-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(168, 255, 121, 0.28);
+      background: rgba(168, 255, 121, 0.08);
+      color: var(--ok);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: "Orbitron", sans-serif;
+    }
+
+    .panel-body {
+      padding: 16px;
+    }
+
+    .upload-zone {
+      position: relative;
+      border-radius: 18px;
+      border: 1.4px dashed rgba(117, 249, 255, 0.48);
+      padding: 28px 18px;
+      text-align: center;
+      background:
+        linear-gradient(180deg, rgba(117, 249, 255, 0.09), rgba(255, 255, 255, 0.01)),
+        rgba(4, 12, 28, 0.84);
+      transition: transform var(--ease), border-color var(--ease), box-shadow var(--ease);
+      box-shadow: inset 0 0 0 1px rgba(117, 249, 255, 0.12);
+      overflow: hidden;
+    }
+
+    .upload-zone::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -100%;
+      height: 100%;
+      background: linear-gradient(180deg, transparent, rgba(117, 249, 255, 0.16), transparent);
+      animation: scanner 2.8s linear infinite;
+      pointer-events: none;
+    }
+
+    .upload-zone:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 200, 124, 0.62);
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 200, 124, 0.18);
+    }
+
+    .upload-zone.drag-active {
+      border-color: var(--amber);
+      box-shadow: 0 0 28px rgba(255, 200, 124, 0.35), inset 0 0 0 1px rgba(255, 200, 124, 0.25);
+    }
+
+    .upload-glyph {
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(117, 249, 255, 0.45);
+      display: grid;
+      place-items: center;
+      color: var(--cyan);
+      font-size: 1.9rem;
+      font-family: "Orbitron", sans-serif;
+      background: linear-gradient(140deg, rgba(117, 249, 255, 0.2), rgba(255, 200, 124, 0.14));
+      box-shadow: 0 0 24px rgba(117, 249, 255, 0.3);
+    }
+
+    .upload-title {
+      margin: 0;
+      font-size: 1.08rem;
+      letter-spacing: 0.02em;
+      font-weight: 700;
+    }
+
+    .upload-sub {
+      margin: 6px auto 0;
+      max-width: 440px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.93rem;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 11px;
+      padding: 11px 16px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-decoration: none;
+      transition: transform var(--ease), filter var(--ease), box-shadow var(--ease), opacity var(--ease);
+      position: relative;
+      overflow: hidden;
+      text-transform: uppercase;
+      font-size: 0.84rem;
+      font-family: "Orbitron", sans-serif;
+    }
+
+    .btn::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -120%;
+      width: 58%;
+      height: 100%;
+      transform: skewX(-18deg);
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+      transition: left 0.45s ease;
+      pointer-events: none;
+    }
+
+    .btn:hover::after {
+      left: 135%;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+    }
+
+    .btn-primary {
+      color: #051119;
+      background: linear-gradient(135deg, var(--cyan), #b0feff);
+      box-shadow: 0 10px 24px rgba(117, 249, 255, 0.36);
+    }
+
+    .btn-secondary {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+    }
+
+    .btn-accent {
+      color: #15100a;
+      background: linear-gradient(135deg, var(--amber), #ffe6ab);
+      box-shadow: 0 10px 26px rgba(255, 200, 124, 0.28);
+    }
+
+    .btn-download {
+      color: var(--text);
+      background: linear-gradient(135deg, rgba(93, 234, 199, 0.26), rgba(117, 249, 255, 0.2));
+      border: 1px solid rgba(117, 249, 255, 0.28);
+      box-shadow: 0 10px 22px rgba(93, 234, 199, 0.24);
+    }
+
+    .btn[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    .file-name,
+    .error-hint {
+      margin-top: 12px;
+      min-height: 20px;
+      font-size: 0.9rem;
+    }
+
+    .file-name {
+      color: var(--muted);
+      word-break: break-word;
+    }
+
+    .error-hint {
+      color: var(--rose);
+      display: none;
+    }
+
+    .preview-wrap {
+      margin-top: 16px;
+      display: none;
+    }
+
+    .preview-wrap.show {
+      display: block;
+      animation: rise 240ms ease;
+    }
+
+    .frame {
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(5, 12, 28, 0.84);
+      overflow: hidden;
+    }
+
+    .frame-label {
+      padding: 9px 11px;
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.09em;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      color: var(--cyan);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .frame img {
+      width: 100%;
+      display: block;
+      max-height: 262px;
+      object-fit: contain;
+      background: #050a17;
+      cursor: zoom-in;
+    }
+
+    .image-link {
+      display: block;
+    }
+
+    .open-full {
+      display: inline-flex;
+      margin: 10px 11px 11px;
+      padding: 7px 10px;
+      text-decoration: none;
+      border-radius: 9px;
+      font-family: "Orbitron", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-size: 0.7rem;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      transition: transform var(--ease), border-color var(--ease), background var(--ease);
+    }
+
+    .open-full:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+      background: rgba(117, 249, 255, 0.12);
+    }
+
+    .action-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn.btn-manual-main {
+      color: #05131a;
+      background: linear-gradient(135deg, #7dfdff, #c2feff);
+      border: 1px solid rgba(117, 249, 255, 0.7);
+      box-shadow:
+        0 10px 26px rgba(117, 249, 255, 0.42),
+        0 0 0 1px rgba(117, 249, 255, 0.24) inset;
+      animation: manualPulse 1.9s ease-in-out infinite;
+    }
+
+    .btn.btn-manual-main.active {
+      color: #25170a;
+      background: linear-gradient(135deg, #ffc87c, #ffe8b7);
+      border-color: rgba(255, 200, 124, 0.8);
+      box-shadow:
+        0 10px 28px rgba(255, 200, 124, 0.4),
+        0 0 0 1px rgba(255, 200, 124, 0.3) inset;
+      animation: none;
+    }
+
+    .manual-bar {
+      margin-top: 12px;
+      border-radius: 12px;
+      padding: 10px 12px;
+      border: 1px solid rgba(117, 249, 255, 0.22);
+      background: linear-gradient(135deg, rgba(117, 249, 255, 0.08), rgba(255, 200, 124, 0.08));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .manual-pill {
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .style-lab {
+      margin-top: 12px;
+      border-radius: 14px;
+      padding: 12px;
+      border: 1px solid rgba(117, 249, 255, 0.22);
+      background: linear-gradient(150deg, rgba(117, 249, 255, 0.06), rgba(255, 200, 124, 0.05));
+    }
+
+    .style-title {
+      margin: 0 0 8px;
+      font-family: "Orbitron", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.74rem;
+      color: var(--cyan);
+    }
+
+    .style-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .style-item {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 8px;
+      background: rgba(5, 11, 26, 0.65);
+      min-width: 0;
+    }
+
+    .style-item label {
+      display: block;
+      margin-bottom: 6px;
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.07em;
+      font-size: 0.64rem;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .style-item input[type="range"],
+    .style-item input[type="color"],
+    .style-item select,
+    .style-item input[type="file"] {
+      width: 100%;
+    }
+
+    .style-item select,
+    .style-item input[type="file"] {
+      min-height: 38px;
+      border-radius: 10px;
+      border: 1px solid rgba(117, 249, 255, 0.32);
+      background:
+        linear-gradient(135deg, rgba(117, 249, 255, 0.14), rgba(255, 200, 124, 0.06)),
+        rgba(8, 18, 40, 0.9);
+      color: var(--text);
+      font-family: "Rajdhani", "Trebuchet MS", sans-serif;
+      font-size: 0.9rem;
+      line-height: 1.2;
+      transition: border-color var(--ease), box-shadow var(--ease), transform var(--ease), filter var(--ease);
+      outline: none;
+    }
+
+    .style-item select {
+      appearance: none;
+      cursor: pointer;
+      padding: 8px 36px 8px 10px;
+      background-image:
+        linear-gradient(135deg, rgba(117, 249, 255, 0.14), rgba(255, 200, 124, 0.06)),
+        linear-gradient(45deg, transparent 50%, var(--cyan) 50%),
+        linear-gradient(135deg, var(--cyan) 50%, transparent 50%),
+        linear-gradient(90deg, rgba(117, 249, 255, 0.24), rgba(117, 249, 255, 0.24));
+      background-position:
+        0 0,
+        calc(100% - 18px) calc(50% - 3px),
+        calc(100% - 12px) calc(50% - 3px),
+        calc(100% - 32px) 50%;
+      background-size: auto, 6px 6px, 6px 6px, 1px 64%;
+      background-repeat: no-repeat;
+    }
+
+    .style-item select option {
+      background: #091325;
+      color: #ecf8ff;
+    }
+
+    .style-item input[type="color"] {
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid rgba(117, 249, 255, 0.32);
+      background: rgba(8, 18, 40, 0.92);
+      cursor: pointer;
+      padding: 3px;
+      box-shadow: inset 0 0 0 1px rgba(117, 249, 255, 0.12);
+      transition: border-color var(--ease), box-shadow var(--ease), transform var(--ease), filter var(--ease);
+    }
+
+    .style-item input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+      border-radius: 7px;
+    }
+
+    .style-item input[type="color"]::-webkit-color-swatch {
+      border: 0;
+      border-radius: 7px;
+    }
+
+    .style-item input[type="color"]::-moz-color-swatch {
+      border: 0;
+      border-radius: 7px;
+    }
+
+    .style-item input[type="file"] {
+      padding: 6px 8px 7px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      cursor: pointer;
+    }
+
+    .style-item input[type="file"]::file-selector-button {
+      margin-right: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(117, 249, 255, 0.44);
+      background: linear-gradient(135deg, rgba(117, 249, 255, 0.28), rgba(255, 200, 124, 0.2));
+      color: #e9f7ff;
+      padding: 6px 10px;
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      line-height: 1;
+      cursor: pointer;
+      transition: transform var(--ease), filter var(--ease), border-color var(--ease);
+    }
+
+    .style-item select:hover,
+    .style-item input[type="color"]:hover,
+    .style-item input[type="file"]:hover {
+      border-color: rgba(117, 249, 255, 0.5);
+      filter: brightness(1.03);
+    }
+
+    .style-item input[type="file"]:hover::file-selector-button {
+      transform: translateY(-1px);
+      border-color: rgba(255, 200, 124, 0.62);
+      filter: brightness(1.05);
+    }
+
+    .style-item select:focus,
+    .style-item input[type="color"]:focus-visible,
+    .style-item input[type="file"]:focus-visible {
+      border-color: rgba(117, 249, 255, 0.72);
+      box-shadow: 0 0 0 2px rgba(117, 249, 255, 0.18), 0 0 18px rgba(117, 249, 255, 0.16);
+    }
+
+    .style-value {
+      margin-top: 4px;
+      font-size: 0.78rem;
+      color: var(--cyan);
+    }
+
+    .style-actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .mini-btn {
+      padding: 8px 11px;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      font-family: "Orbitron", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-size: 0.67rem;
+      cursor: pointer;
+      transition: transform var(--ease), border-color var(--ease), background var(--ease);
+    }
+
+    .mini-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+      background: rgba(117, 249, 255, 0.12);
+    }
+
+    .mini-btn.primary {
+      color: #041118;
+      border-color: rgba(117, 249, 255, 0.6);
+      background: linear-gradient(135deg, #74f8ff, #b0fdff);
+      box-shadow: 0 8px 18px rgba(117, 249, 255, 0.26);
+    }
+
+    .mini-btn.warn {
+      color: #25170a;
+      border-color: rgba(255, 200, 124, 0.62);
+      background: linear-gradient(135deg, #ffc87c, #ffe8b7);
+      box-shadow: 0 8px 18px rgba(255, 200, 124, 0.24);
+    }
+
+    .status-note {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    .history-box {
+      margin-top: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(5, 12, 28, 0.7);
+      padding: 8px;
+    }
+
+    .history-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px;
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      font-size: 0.64rem;
+      color: var(--muted);
+    }
+
+    .history-list {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      max-height: 88px;
+      overflow: auto;
+    }
+
+    .history-chip {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 0.72rem;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .history-chip.active {
+      color: #051218;
+      border-color: rgba(117, 249, 255, 0.68);
+      background: linear-gradient(135deg, #74f8ff, #b0fdff);
+    }
+
+    .diff-chip {
+      margin-top: 8px;
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 200, 124, 0.35);
+      background: rgba(255, 200, 124, 0.1);
+      color: var(--amber);
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.64rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .result-box {
+      min-height: 250px;
+      max-height: 380px;
+      overflow: auto;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid rgba(117, 249, 255, 0.2);
+      background:
+        linear-gradient(180deg, rgba(117, 249, 255, 0.07), transparent),
+        rgba(4, 10, 24, 0.9);
+      line-height: 1.75;
+      color: #e9f8ff;
+      box-shadow: inset 0 0 0 1px rgba(117, 249, 255, 0.08);
+    }
+
+    .result-box.editing {
+      border-color: rgba(255, 200, 124, 0.6);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 200, 124, 0.28),
+        0 0 0 1px rgba(255, 200, 124, 0.2);
+      background:
+        linear-gradient(180deg, rgba(255, 200, 124, 0.08), transparent),
+        rgba(6, 12, 28, 0.95);
+    }
+
+    .result-empty {
+      color: var(--muted);
+    }
+
+    .result-box::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .result-box::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 999px;
+    }
+
+    .result-box::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(117, 249, 255, 0.62), rgba(255, 200, 124, 0.62));
+      border-radius: 999px;
+    }
+
+    .strip {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(117, 249, 255, 0.2);
+      background: linear-gradient(135deg, rgba(117, 249, 255, 0.1), rgba(93, 234, 199, 0.08));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .strip span {
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.08em;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .strip strong {
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      font-size: 0.95rem;
+    }
+
+    .confidence {
+      font-weight: 700;
+      color: var(--amber);
+    }
+
+    .time-banner {
+      margin-top: 12px;
+      padding: 11px 13px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 200, 124, 0.22);
+      background: linear-gradient(135deg, rgba(255, 200, 124, 0.11), rgba(117, 249, 255, 0.08));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .time-banner span {
+      color: var(--muted);
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+    }
+
+    .time-banner strong {
+      color: var(--amber);
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.04em;
+    }
+
+    .stats {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stat {
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+      padding: 10px 8px;
+      text-align: center;
+      transition: transform var(--ease), border-color var(--ease);
+    }
+
+    .stat:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+    }
+
+    .stat strong {
+      display: block;
+      font-family: "Orbitron", sans-serif;
+      color: var(--cyan);
+      margin-bottom: 3px;
+      font-size: 0.95rem;
+    }
+
+    .stat span {
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.67rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .comparison {
+      margin-top: 16px;
+    }
+
+    .comparison-note {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .comparison-grid {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 9px;
+    }
+
+    .comparison .frame-label {
+      color: var(--amber);
+    }
+
+    .manual-studio {
+      padding: 0 20px 22px;
+    }
+
+    .studio-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.95fr 1.1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .studio-editor,
+    .studio-controls,
+    .studio-previews {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      background: rgba(6, 12, 30, 0.72);
+      padding: 10px;
+      min-width: 0;
+    }
+
+    .manual-textarea {
+      width: 100%;
+      min-height: 320px;
+      border-radius: 10px;
+      border: 1px solid rgba(117, 249, 255, 0.24);
+      background: rgba(4, 10, 24, 0.9);
+      color: #eaf8ff;
+      padding: 12px;
+      font-family: "Rajdhani", sans-serif;
+      font-size: 1rem;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+    }
+
+    .manual-textarea:focus {
+      border-color: rgba(255, 200, 124, 0.62);
+      box-shadow: 0 0 0 1px rgba(255, 200, 124, 0.3);
+    }
+
+    .studio-actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .canvas-wrap {
+      background: #f8f3e4;
+      max-height: 262px;
+      overflow: auto;
+    }
+
+    .canvas-wrap canvas {
+      width: 100%;
+      display: block;
+      background: #f8f3e4;
+      cursor: zoom-in;
+    }
+
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      z-index: 30;
+      background: rgba(2, 6, 14, 0.76);
+      backdrop-filter: blur(8px);
+    }
+
+    .loading-overlay.show {
+      display: grid;
+    }
+
+    .loading-card {
+      width: min(420px, calc(100% - 28px));
+      border-radius: 18px;
+      border: 1px solid rgba(117, 249, 255, 0.22);
+      background: rgba(7, 14, 31, 0.92);
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 20px 54px rgba(0, 0, 0, 0.48);
+    }
+
+    .spinner {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      margin: 0 auto 14px;
+      border: 4px solid rgba(255, 255, 255, 0.08);
+      border-top-color: var(--cyan);
+      border-right-color: var(--amber);
+      animation: spin 0.9s linear infinite;
+      box-shadow: 0 0 26px rgba(117, 249, 255, 0.3);
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scanner {
+      0% { top: -100%; }
+      100% { top: 130%; }
+    }
+
+    @keyframes sweep {
+      0% { left: -36%; }
+      100% { left: 130%; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.72; }
+    }
+
+    @keyframes drift {
+      0% { transform: translate3d(0, 0, 0) scale(1); }
+      100% { transform: translate3d(24px, -20px, 0) scale(1.06); }
+    }
+
+    @keyframes manualPulse {
+      0%, 100% {
+        transform: translateY(0);
+        box-shadow:
+          0 10px 26px rgba(117, 249, 255, 0.42),
+          0 0 0 1px rgba(117, 249, 255, 0.24) inset;
+      }
+      50% {
+        transform: translateY(-1px);
+        box-shadow:
+          0 12px 32px rgba(117, 249, 255, 0.58),
+          0 0 0 1px rgba(117, 249, 255, 0.32) inset;
+      }
+    }
+
+    @media (max-width: 1060px) {
+      .hero-grid,
+      .content,
+      .studio-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .hero,
+      .content,
+      .manual-studio {
+        padding: 16px;
+      }
+
+      .title {
+        font-size: 2.2rem;
+      }
+
+      .stats,
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .action-row {
+        justify-content: flex-start;
+      }
+
+      .style-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+</style>
+</head>
+<body>
+  <div class="ambient"></div>
+  <div class="grid-overlay"></div>
+
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <h2 style="margin:0 0 6px; font-family:'Orbitron', sans-serif; letter-spacing:0.06em; text-transform:uppercase; font-size:1.05rem;">Scanning Document</h2>
+      <p style="margin:0; color:var(--muted); line-height:1.6;">OCR pipeline is processing your file, building previews, and preparing the final report.</p>
+    </div>
+  </div>
+
+  <main class="app">
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <span class="badge"><span class="dot"></span> Neural OCR Control Hub</span>
+          <h1 class="title">Quantum <strong>OCR</strong> Deck</h1>
+          <p class="sub">High-clarity document extraction interface with scan-grade visuals, live file preview, text metrics, comparison panels, and export-ready report output.</p>
+        </div>
+        <div class="hero-cards">
+          <div class="hero-card">
+            <strong>Adaptive Pipeline</strong>
+            <p>Original, preprocessed, and OCR result views are aligned in a single comparison lane.</p>
+          </div>
+          <div class="hero-card">
+            <strong>Cloud OCR Runtime</strong>
+            <p>Engine telemetry is shown in real time with processing time and confidence metadata.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <article class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Input Channel</h2>
+          <span class="live-chip">System Online</span>
+        </div>
+
+        <div class="panel-body">
+          <form action="/upload" method="POST" enctype="multipart/form-data" id="ocrForm">
+            <div class="upload-zone" id="uploadArea">
+              <div class="upload-glyph">+</div>
+              <p class="upload-title">Drop image here or select from disk</p>
+              <p class="upload-sub">Accepted formats: PNG, JPG, JPEG. Sharper scans produce better OCR quality.</p>
+
+              <div class="button-row">
+                <label for="fileInput" class="btn btn-secondary">Choose File</label>
+                <button type="submit" class="btn btn-primary">Run OCR Scan</button>
+              </div>
+
+              <input id="fileInput" class="file-input" type="file" name="file" accept=".png,.jpg,.jpeg" required>
+              <div class="file-name" id="fileName">No file selected</div>
+              <div class="error-hint" id="fileError">Please choose a valid image file first.</div>
+            </div>
+          </form>
+
+          <div class="preview-wrap" id="previewWrap">
+            <div class="frame">
+              <div class="frame-label">Selected Preview</div>
+              <a href="#" target="_blank" rel="noopener noreferrer" id="previewLink" class="image-link">
+                <img id="previewImage" alt="Selected file preview">
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer" id="previewOpen" class="open-full">Open Full Image</a>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Extracted Output</h2>
+          <div class="action-row">
+            <button type="button" class="btn btn-accent" id="copyRawBtn">Copy OCR Text</button>
+            <button type="button" class="btn btn-manual-main" id="openManualStudioBtn">Open Manual Edit Studio</button>
+            <a
+              class="btn btn-download {{ 'is-hidden' if not report_file else '' }}"
+              href="{{ '/uploads/' + report_file if report_file else '#' }}"
+              download
+              aria-disabled="{{ 'false' if report_file else 'true' }}"
+            >Download PDF</a>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <div class="result-box {{ 'result-empty' if not text else '' }}" id="resultText">{{ text if text else 'Extracted text will appear here after you run OCR.' }}</div>
+
+          <div class="manual-bar">
+            <span class="manual-pill">Use the separate Manual Edit Studio below for corrections, handwriting matching, and final export.</span>
+          </div>
+
+          <div class="strip {{ 'is-hidden' if not document_type else '' }}">
+            <div>
+              <span>Document Type Prediction</span>
+              <strong>{{ document_type }}</strong>
+            </div>
+            <div class="confidence">{{ '%.1f%% confidence'|format(document_confidence * 100) if document_confidence is not none else '' }}</div>
+          </div>
+
+          <div class="strip">
+            <div>
+              <span>OCR Service</span>
+              <strong>Secure OCR Service</strong>
+            </div>
+            <div class="confidence">{{ '%.2fs'|format(processing_seconds) if processing_seconds is not none else '' }}</div>
+          </div>
+
+          <div class="time-banner">
+            <span>Processing Time</span>
+            <strong>{{ '%.2f seconds'|format(processing_seconds) if processing_seconds is not none else 'Waiting for scan...' }}</strong>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <strong id="charCount">0</strong>
+              <span>Characters</span>
+            </div>
+            <div class="stat">
+              <strong id="wordCount">0</strong>
+              <span>Words</span>
+            </div>
+            <div class="stat">
+              <strong id="lineCount">0</strong>
+              <span>Lines</span>
+            </div>
+            <div class="stat">
+              <strong id="timeUsed">{{ '%.2fs'|format(processing_seconds) if processing_seconds is not none else '--' }}</strong>
+              <span>Time Used</span>
+            </div>
+          </div>
+
+          <div class="comparison {{ 'is-hidden' if not image else '' }}">
+            <h3 style="margin:14px 0 0; font-family:'Orbitron', sans-serif; letter-spacing:0.06em; text-transform:uppercase; font-size:0.92rem;">Image Comparison</h3>
+            <p class="comparison-note">Review original upload, preprocessed frame, and OCR-annotated output in one view.</p>
+
+            <div class="comparison-grid">
+              <div class="frame">
+                <div class="frame-label">Original</div>
+                <a href="{{ '/uploads/' + original_image if original_image else '#' }}" target="_blank" rel="noopener noreferrer" class="image-link">
+                  <img src="{{ '/uploads/' + original_image if original_image else '' }}" alt="Original uploaded image">
+                </a>
+                <a href="{{ '/uploads/' + original_image if original_image else '#' }}" target="_blank" rel="noopener noreferrer" class="open-full">Open Full Image</a>
+              </div>
+
+              <div class="frame">
+                <div class="frame-label">Preprocessed</div>
+                <a href="{{ '/uploads/' + preprocessed_image if preprocessed_image else '#' }}" target="_blank" rel="noopener noreferrer" class="image-link">
+                  <img src="{{ '/uploads/' + preprocessed_image if preprocessed_image else '' }}" alt="Preprocessed OCR image">
+                </a>
+                <a href="{{ '/uploads/' + preprocessed_image if preprocessed_image else '#' }}" target="_blank" rel="noopener noreferrer" class="open-full">Open Full Image</a>
+              </div>
+
+              <div class="frame">
+                <div class="frame-label">OCR Annotated</div>
+                <a href="{{ '/uploads/' + image if image else '#' }}" target="_blank" rel="noopener noreferrer" class="image-link">
+                  <img id="annotatedImageView" src="{{ '/uploads/' + image if image else '' }}" alt="OCR annotated output">
+                </a>
+                <a href="{{ '/uploads/' + image if image else '#' }}" target="_blank" rel="noopener noreferrer" class="open-full">Open Full Image</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="manual-studio" id="manualStudio">
+      <article class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Manual Edit Studio</h2>
+          <span class="live-chip" id="studioState">Ready</span>
+        </div>
+
+        <div class="panel-body">
+          <div class="studio-grid">
+            <div class="studio-editor">
+              <div class="frame-label">Editable Corrected Text</div>
+              <textarea id="manualTextInput" class="manual-textarea" placeholder="OCR text will appear here for manual correction..."></textarea>
+
+              <div class="studio-actions">
+                <button type="button" class="mini-btn primary" id="copyEditedBtn">Copy Edited Text</button>
+                <button type="button" class="mini-btn" id="resetEditedBtn">Reset to OCR</button>
+                <button type="button" class="mini-btn warn" id="applyToImageBtn">Apply on OCR Image</button>
+                <span class="status-note">Changed: <strong id="changeCount">0 words</strong></span>
+              </div>
+            </div>
+
+            <div class="studio-controls">
+              <div class="style-lab" style="margin-top:0;">
+                <p class="style-title">Handwriting Match Controls</p>
+                <div class="style-grid">
+                  <div class="style-item">
+                    <label for="fontSelect">Handwriting Font</label>
+                    <select id="fontSelect">
+                      <option value="Caveat">Caveat</option>
+                      <option value="Kalam">Kalam</option>
+                      <option value="Patrick Hand">Patrick Hand</option>
+                      <option value="Shadows Into Light">Shadows Into Light</option>
+                    </select>
+                  </div>
+                  <div class="style-item">
+                    <label for="inkColorPicker">Ink Color</label>
+                    <input type="color" id="inkColorPicker" value="#1f3550">
+                  </div>
+                  <div class="style-item">
+                    <label for="sampleUpload">User Handwriting Samples</label>
+                    <input type="file" id="sampleUpload" accept=".png,.jpg,.jpeg" multiple>
+                  </div>
+                  <div class="style-item">
+                    <label for="sizeRange">Font Size</label>
+                    <input id="sizeRange" type="range" min="24" max="72" value="40">
+                    <div class="style-value" id="sizeValue">40 px</div>
+                  </div>
+                  <div class="style-item">
+                    <label for="slantRange">Slant</label>
+                    <input id="slantRange" type="range" min="-20" max="20" value="-4">
+                    <div class="style-value" id="slantValue">-4 deg</div>
+                  </div>
+                  <div class="style-item">
+                    <label for="lineGapRange">Line Gap</label>
+                    <input id="lineGapRange" type="range" min="28" max="70" value="44">
+                    <div class="style-value" id="lineGapValue">44 px</div>
+                  </div>
+                  <div class="style-item">
+                    <label for="jitterRange">Stroke Jitter</label>
+                    <input id="jitterRange" type="range" min="0" max="8" value="1" step="0.1">
+                    <div class="style-value" id="jitterValue">1.0</div>
+                  </div>
+                  <div class="style-item">
+                    <label for="opacityRange">Ink Opacity</label>
+                    <input id="opacityRange" type="range" min="35" max="100" value="92">
+                    <div class="style-value" id="opacityValue">92 %</div>
+                  </div>
+                  <div class="style-item">
+                    <label for="weightRange">Stroke Weight</label>
+                    <input id="weightRange" type="range" min="400" max="800" step="50" value="700">
+                    <div class="style-value" id="weightValue">700</div>
+                  </div>
+                </div>
+
+                <div class="style-actions">
+                  <button type="button" class="mini-btn primary" id="matchStyleBtn">Match My Handwriting</button>
+                  <span class="status-note" id="styleStatus">Upload sample(s), then click match.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="studio-previews">
+              <div class="frame">
+                <div class="frame-label">Edited Handwriting Preview</div>
+                <a href="#" target="_blank" rel="noopener noreferrer" id="editedPreviewOpen" class="image-link">
+                  <div class="canvas-wrap">
+                    <canvas id="editedTextCanvas" width="980" height="620" aria-label="Edited handwriting preview"></canvas>
+                  </div>
+                </a>
+                <a href="#" id="downloadEditedImage" class="open-full" download="edited_handwriting_preview.png">Download Preview</a>
+              </div>
+
+              <div class="frame" style="margin-top:10px;">
+                <div class="frame-label">Applied Edits on OCR Image</div>
+                <a href="#" target="_blank" rel="noopener noreferrer" id="appliedPreviewOpen" class="image-link">
+                  <div class="canvas-wrap">
+                    <canvas id="appliedImageCanvas" width="980" height="620" aria-label="Applied edits image preview"></canvas>
+                  </div>
+                </a>
+                <a href="#" id="downloadAppliedImage" class="open-full" download="ocr_with_manual_edits.png">Download Applied Image</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const placeholderText = "Extracted text will appear here after you run OCR.";
+
+    const fileInput = document.getElementById("fileInput");
+    const fileName = document.getElementById("fileName");
+    const previewWrap = document.getElementById("previewWrap");
+    const previewImage = document.getElementById("previewImage");
+    const previewLink = document.getElementById("previewLink");
+    const previewOpen = document.getElementById("previewOpen");
+    const uploadArea = document.getElementById("uploadArea");
+    const ocrForm = document.getElementById("ocrForm");
+    const fileError = document.getElementById("fileError");
+    const loadingOverlay = document.getElementById("loadingOverlay");
+
+    const resultText = document.getElementById("resultText");
+    const copyRawBtn = document.getElementById("copyRawBtn");
+    const openManualStudioBtn = document.getElementById("openManualStudioBtn");
+
+    const manualStudio = document.getElementById("manualStudio");
+    const manualTextInput = document.getElementById("manualTextInput");
+    const copyEditedBtn = document.getElementById("copyEditedBtn");
+    const resetEditedBtn = document.getElementById("resetEditedBtn");
+    const applyToImageBtn = document.getElementById("applyToImageBtn");
+    const changeCount = document.getElementById("changeCount");
+    const studioState = document.getElementById("studioState");
+
+    const fontSelect = document.getElementById("fontSelect");
+    const inkColorPicker = document.getElementById("inkColorPicker");
+    const sampleUpload = document.getElementById("sampleUpload");
+    const sizeRange = document.getElementById("sizeRange");
+    const slantRange = document.getElementById("slantRange");
+    const lineGapRange = document.getElementById("lineGapRange");
+    const jitterRange = document.getElementById("jitterRange");
+    const opacityRange = document.getElementById("opacityRange");
+    const weightRange = document.getElementById("weightRange");
+    const sizeValue = document.getElementById("sizeValue");
+    const slantValue = document.getElementById("slantValue");
+    const lineGapValue = document.getElementById("lineGapValue");
+    const jitterValue = document.getElementById("jitterValue");
+    const opacityValue = document.getElementById("opacityValue");
+    const weightValue = document.getElementById("weightValue");
+    const matchStyleBtn = document.getElementById("matchStyleBtn");
+    const styleStatus = document.getElementById("styleStatus");
+
+    const editedTextCanvas = document.getElementById("editedTextCanvas");
+    const editedPreviewOpen = document.getElementById("editedPreviewOpen");
+    const downloadEditedImage = document.getElementById("downloadEditedImage");
+    const appliedImageCanvas = document.getElementById("appliedImageCanvas");
+    const appliedPreviewOpen = document.getElementById("appliedPreviewOpen");
+    const downloadAppliedImage = document.getElementById("downloadAppliedImage");
+    const annotatedImageView = document.getElementById("annotatedImageView");
+
+    const charCount = document.getElementById("charCount");
+    const wordCount = document.getElementById("wordCount");
+    const lineCount = document.getElementById("lineCount");
+
+    const styleState = {
+      font: "Caveat",
+      color: "#1f3550",
+      size: 40,
+      slant: -4,
+      lineGap: 44,
+      jitter: 1,
+      opacity: 92,
+      weight: 700,
+    };
+
+    let originalOcrText = "";
+
+    function getRawOcrText() {
+      const raw = (resultText?.innerText || "").replace(/\u00A0/g, " ").trim();
+      return raw === placeholderText ? "" : raw;
+    }
+
+    function getEditedText() {
+      return (manualTextInput.value || "").replace(/\r\n/g, "\n").trim();
+    }
+
+    function wordDiffCount(baseText, editedText) {
+      const a = (baseText || "").trim() ? baseText.trim().split(/\s+/) : [];
+      const b = (editedText || "").trim() ? editedText.trim().split(/\s+/) : [];
+      const len = Math.max(a.length, b.length);
+      let changes = 0;
+      for (let i = 0; i < len; i++) {
+        if ((a[i] || "") !== (b[i] || "")) {
+          changes += 1;
+        }
+      }
+      return changes;
+    }
+
+    function updateOutputStats() {
+      const value = getRawOcrText();
+      charCount.innerText = value.length;
+      wordCount.innerText = value ? value.split(/\s+/).length : 0;
+      lineCount.innerText = value ? value.split(/\n+/).filter(Boolean).length : 0;
+      copyRawBtn.disabled = !value;
+    }
+
+    function setStudioState(text) {
+      studioState.innerText = text;
+    }
+
+    function updateStyleLabels() {
+      sizeValue.innerText = `${styleState.size} px`;
+      slantValue.innerText = `${styleState.slant} deg`;
+      lineGapValue.innerText = `${styleState.lineGap} px`;
+      jitterValue.innerText = `${styleState.jitter.toFixed(1)}`;
+      opacityValue.innerText = `${styleState.opacity} %`;
+      weightValue.innerText = `${styleState.weight}`;
+    }
+
+    function syncControlsFromState() {
+      fontSelect.value = styleState.font;
+      inkColorPicker.value = styleState.color;
+      sizeRange.value = String(styleState.size);
+      slantRange.value = String(styleState.slant);
+      lineGapRange.value = String(styleState.lineGap);
+      jitterRange.value = String(styleState.jitter);
+      opacityRange.value = String(styleState.opacity);
+      weightRange.value = String(styleState.weight);
+      updateStyleLabels();
+    }
+
+    function readStyleFromControls() {
+      styleState.font = fontSelect.value;
+      styleState.color = inkColorPicker.value;
+      styleState.size = Number(sizeRange.value);
+      styleState.slant = Number(slantRange.value);
+      styleState.lineGap = Number(lineGapRange.value);
+      styleState.jitter = Number(jitterRange.value);
+      styleState.opacity = Number(opacityRange.value);
+      styleState.weight = Number(weightRange.value);
+      updateStyleLabels();
+      renderPreviews();
+    }
+
+    function hexToRgba(hex, alpha) {
+      const clean = hex.replace("#", "");
+      const r = parseInt(clean.substring(0, 2), 16);
+      const g = parseInt(clean.substring(2, 4), 16);
+      const b = parseInt(clean.substring(4, 6), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function wrapLines(ctx, text, maxWidth) {
+      const lines = [];
+      const paragraphs = (text || "").split(/\n/);
+
+      for (const paragraph of paragraphs) {
+        if (!paragraph.trim()) {
+          lines.push("");
+          continue;
+        }
+        const words = paragraph.split(/\s+/).filter(Boolean);
+        let line = words[0] || "";
+        for (let i = 1; i < words.length; i++) {
+          const candidate = `${line} ${words[i]}`;
+          if (ctx.measureText(candidate).width <= maxWidth) {
+            line = candidate;
+          } else {
+            lines.push(line);
+            line = words[i];
+          }
+        }
+        lines.push(line);
+      }
+      return lines;
+    }
+
+    function lineNoise(index, amount) {
+      const x = Math.sin((index + 1) * 12.9898) * 43758.5453;
+      const frac = x - Math.floor(x);
+      return (frac - 0.5) * 2 * amount;
+    }
+
+    function renderHandwriting(canvas, text) {
+      const ctx = canvas.getContext("2d");
+      const width = 980;
+      const padX = 76;
+      const padTop = 68;
+      const lineGap = styleState.lineGap;
+      const maxWidth = width - padX * 2;
+
+      const drawText = text || "No edited text available.";
+      ctx.font = `${styleState.weight} ${styleState.size}px '${styleState.font}', cursive`;
+      const lines = wrapLines(ctx, drawText, maxWidth);
+      const height = Math.max(620, padTop + lines.length * lineGap + 46);
+
+      canvas.width = width;
+      canvas.height = height;
+
+      ctx.fillStyle = "#f8f3e4";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.strokeStyle = "rgba(98, 145, 201, 0.22)";
+      ctx.lineWidth = 1;
+      for (let y = padTop + 12; y < height; y += lineGap) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "rgba(220, 93, 93, 0.36)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(padX - 20, 0);
+      ctx.lineTo(padX - 20, height);
+      ctx.stroke();
+
+      const slantTan = Math.tan((styleState.slant * Math.PI) / 180);
+      let y = padTop;
+      lines.forEach((line, idx) => {
+        if (!line) {
+          y += lineGap * 0.7;
+          return;
+        }
+        const jitterX = lineNoise(idx, styleState.jitter);
+        const jitterY = lineNoise(idx + 41, styleState.jitter * 0.5);
+
+        ctx.save();
+        ctx.fillStyle = hexToRgba(styleState.color, styleState.opacity / 100);
+        ctx.font = `${styleState.weight} ${styleState.size}px '${styleState.font}', cursive`;
+        ctx.translate(padX + jitterX, y + jitterY);
+        ctx.transform(1, 0, slantTan, 1, 0, 0);
+        ctx.fillText(line, 0, 0);
+        ctx.restore();
+
+        y += lineGap;
+      });
+    }
+
+    function renderAppliedPreview(text) {
+      const ctx = appliedImageCanvas.getContext("2d");
+      const width = 980;
+      const height = 620;
+      appliedImageCanvas.width = width;
+      appliedImageCanvas.height = height;
+
+      const drawFallback = () => {
+        renderHandwriting(appliedImageCanvas, text || "No OCR image available yet.");
+        const data = appliedImageCanvas.toDataURL("image/png");
+        appliedPreviewOpen.href = data;
+        downloadAppliedImage.href = data;
+      };
+
+      if (!annotatedImageView || !annotatedImageView.src) {
+        drawFallback();
+        return;
+      }
+
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        ctx.fillStyle = "#0b142b";
+        ctx.fillRect(0, 0, width, height);
+
+        const scale = Math.min(width / img.width, height / img.height);
+        const drawW = img.width * scale;
+        const drawH = img.height * scale;
+        const x = (width - drawW) / 2;
+        const y = (height - drawH) / 2;
+        ctx.drawImage(img, x, y, drawW, drawH);
+
+        const overlayH = Math.min(250, Math.max(150, height * 0.33));
+        const overlayY = height - overlayH - 12;
+
+        ctx.fillStyle = "rgba(248, 243, 228, 0.92)";
+        ctx.fillRect(18, overlayY, width - 36, overlayH);
+        ctx.strokeStyle = "rgba(34, 61, 92, 0.28)";
+        ctx.strokeRect(18, overlayY, width - 36, overlayH);
+
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = width - 56;
+        tempCanvas.height = overlayH - 20;
+        renderHandwriting(tempCanvas, text || "No edited text.");
+        ctx.drawImage(tempCanvas, 28, overlayY + 10, width - 56, overlayH - 20);
+
+        const data = appliedImageCanvas.toDataURL("image/png");
+        appliedPreviewOpen.href = data;
+        downloadAppliedImage.href = data;
+      };
+
+      img.onerror = drawFallback;
+      img.src = annotatedImageView.src;
+    }
+
+    function renderPreviews() {
+      const text = getEditedText();
+      renderHandwriting(editedTextCanvas, text);
+      const editedData = editedTextCanvas.toDataURL("image/png");
+      editedPreviewOpen.href = editedData;
+      downloadEditedImage.href = editedData;
+
+      renderAppliedPreview(text);
+    }
+
+    function updateChangeCount() {
+      changeCount.innerText = `${wordDiffCount(originalOcrText, getEditedText())} words`;
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function analyzeSampleImage(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const maxSide = 620;
+            const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+            const w = Math.max(1, Math.round(img.width * scale));
+            const h = Math.max(1, Math.round(img.height * scale));
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+
+            const data = ctx.getImageData(0, 0, w, h).data;
+            const mask = new Uint8Array(w * h);
+            let darkCount = 0;
+            let sumGray = 0;
+            let sumX = 0;
+            let sumY = 0;
+            let minX = w, minY = h, maxX = 0, maxY = 0;
+            let transitions = 0;
+
+            for (let y = 0; y < h; y++) {
+              for (let x = 0; x < w; x++) {
+                const idx = (y * w + x) * 4;
+                const gray = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+                if (gray < 205) {
+                  mask[y * w + x] = 1;
+                  darkCount++;
+                  sumGray += gray;
+                  sumX += x;
+                  sumY += y;
+                  if (x < minX) minX = x;
+                  if (y < minY) minY = y;
+                  if (x > maxX) maxX = x;
+                  if (y > maxY) maxY = y;
+                }
+              }
+            }
+
+            if (darkCount < 100) {
+              reject(new Error("Sample has too little handwriting."));
+              return;
+            }
+
+            for (let y = 0; y < h; y++) {
+              let prev = 0;
+              for (let x = 0; x < w; x++) {
+                const curr = mask[y * w + x];
+                if (curr !== prev) transitions++;
+                prev = curr;
+              }
+            }
+
+            const meanX = sumX / darkCount;
+            const meanY = sumY / darkCount;
+            let covXX = 0, covYY = 0, covXY = 0;
+
+            for (let y = 0; y < h; y++) {
+              for (let x = 0; x < w; x++) {
+                if (!mask[y * w + x]) continue;
+                const dx = x - meanX;
+                const dy = y - meanY;
+                covXX += dx * dx;
+                covYY += dy * dy;
+                covXY += dx * dy;
+              }
+            }
+
+            resolve({
+              angle: 0.5 * Math.atan2(2 * covXY, covXX - covYY) * (180 / Math.PI),
+              bboxW: Math.max(1, maxX - minX + 1),
+              bboxH: Math.max(1, maxY - minY + 1),
+              darkRatio: darkCount / (w * h),
+              darkness: 1 - (sumGray / darkCount) / 255,
+              roughness: transitions / Math.max(1, h),
+            });
+          };
+          img.onerror = () => reject(new Error("Could not read sample image."));
+          img.src = reader.result;
+        };
+        reader.onerror = () => reject(new Error("Could not load sample file."));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function applyMatchedStyle(metrics) {
+      styleState.slant = Math.round(clamp(metrics.angle * 0.7, -18, 18));
+      styleState.opacity = Math.round(clamp(70 + metrics.darkness * 34 + metrics.darkRatio * 120, 45, 100));
+      styleState.jitter = Number(clamp(metrics.roughness / 55, 0.2, 5.4).toFixed(1));
+      styleState.size = Math.round(clamp(26 + metrics.bboxH * 0.09, 30, 58));
+      styleState.weight = metrics.darkness > 0.48 ? 750 : (metrics.darkness > 0.35 ? 700 : 600);
+
+      if (metrics.bboxH / metrics.bboxW > 0.35) {
+        styleState.font = "Kalam";
+      } else if (metrics.darkness > 0.5) {
+        styleState.font = "Patrick Hand";
+      } else if (Math.abs(styleState.slant) > 10) {
+        styleState.font = "Shadows Into Light";
+      } else {
+        styleState.font = "Caveat";
+      }
+
+      styleState.lineGap = Math.round(clamp(styleState.size + 6, 32, 66));
+      syncControlsFromState();
+      renderPreviews();
+    }
+
+    function showPreview(file) {
+      if (!file) {
+        previewLink.href = "#";
+        previewOpen.href = "#";
+        previewWrap.classList.remove("show");
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      previewImage.src = url;
+      previewLink.href = url;
+      previewOpen.href = url;
+      previewWrap.classList.add("show");
+    }
+
+    function handleFile(file) {
+      if (!file) {
+        fileName.innerText = "No file selected";
+        previewWrap.classList.remove("show");
+        return;
+      }
+      const validTypes = ["image/png", "image/jpeg", "image/jpg"];
+      if (!validTypes.includes(file.type)) {
+        fileError.style.display = "block";
+        fileName.innerText = "Unsupported file type";
+        previewWrap.classList.remove("show");
+        return;
+      }
+      fileError.style.display = "none";
+      fileName.innerText = file.name;
+      showPreview(file);
+    }
+
+    fileInput.addEventListener("change", () => {
+      handleFile(fileInput.files[0]);
+    });
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+      uploadArea.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        uploadArea.classList.add("drag-active");
+      });
+    });
+
+    ["dragleave", "drop"].forEach((eventName) => {
+      uploadArea.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        uploadArea.classList.remove("drag-active");
+      });
+    });
+
+    uploadArea.addEventListener("drop", (event) => {
+      const file = event.dataTransfer.files[0];
+      if (!file) return;
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      fileInput.files = dt.files;
+      handleFile(file);
+    });
+
+    ocrForm.addEventListener("submit", (event) => {
+      if (!fileInput.files.length) {
+        event.preventDefault();
+        fileError.style.display = "block";
+        return;
+      }
+      loadingOverlay.classList.add("show");
+    });
+
+    copyRawBtn.addEventListener("click", async () => {
+      const content = getRawOcrText();
+      if (!content) return;
+      await navigator.clipboard.writeText(content);
+      const original = copyRawBtn.innerText;
+      copyRawBtn.innerText = "Copied";
+      setTimeout(() => { copyRawBtn.innerText = original; }, 1200);
+    });
+
+    openManualStudioBtn.addEventListener("click", () => {
+      manualStudio.scrollIntoView({ behavior: "smooth", block: "start" });
+      manualTextInput.focus();
+    });
+
+    copyEditedBtn.addEventListener("click", async () => {
+      const content = getEditedText();
+      if (!content) return;
+      await navigator.clipboard.writeText(content);
+      const original = copyEditedBtn.innerText;
+      copyEditedBtn.innerText = "Copied";
+      setTimeout(() => { copyEditedBtn.innerText = original; }, 1200);
+    });
+
+    resetEditedBtn.addEventListener("click", () => {
+      manualTextInput.value = originalOcrText;
+      updateChangeCount();
+      renderPreviews();
+      setStudioState("Reset to OCR");
+    });
+
+    applyToImageBtn.addEventListener("click", () => {
+      renderAppliedPreview(getEditedText());
+      setStudioState("Applied on image");
+    });
+
+    manualTextInput.addEventListener("input", () => {
+      updateChangeCount();
+      renderPreviews();
+      setStudioState("Editing");
+    });
+
+    [fontSelect, inkColorPicker, sizeRange, slantRange, lineGapRange, jitterRange, opacityRange, weightRange]
+      .forEach((el) => {
+        el.addEventListener("input", readStyleFromControls);
+        el.addEventListener("change", readStyleFromControls);
+      });
+
+    matchStyleBtn.addEventListener("click", async () => {
+      const files = sampleUpload.files || [];
+      if (!files.length) {
+        styleStatus.innerText = "Please upload at least one sample first.";
+        setStudioState("Need sample");
+        return;
+      }
+
+      try {
+        let agg = { angle: 0, bboxW: 0, bboxH: 0, darkRatio: 0, darkness: 0, roughness: 0 };
+        let used = 0;
+        for (let i = 0; i < Math.min(files.length, 3); i++) {
+          const m = await analyzeSampleImage(files[i]);
+          agg.angle += m.angle;
+          agg.bboxW += m.bboxW;
+          agg.bboxH += m.bboxH;
+          agg.darkRatio += m.darkRatio;
+          agg.darkness += m.darkness;
+          agg.roughness += m.roughness;
+          used++;
+        }
+
+        const avg = {
+          angle: agg.angle / used,
+          bboxW: agg.bboxW / used,
+          bboxH: agg.bboxH / used,
+          darkRatio: agg.darkRatio / used,
+          darkness: agg.darkness / used,
+          roughness: agg.roughness / used,
+        };
+
+        applyMatchedStyle(avg);
+        styleStatus.innerText = `Matched ${used} sample(s). Slant ${styleState.slant} deg, opacity ${styleState.opacity}%.`;
+        setStudioState("Style matched");
+      } catch (err) {
+        styleStatus.innerText = `Match failed: ${err.message}`;
+        setStudioState("Match failed");
+      }
+    });
+
+    if (annotatedImageView) {
+      annotatedImageView.addEventListener("load", () => {
+        renderAppliedPreview(getEditedText());
+      });
+    }
+
+    originalOcrText = getRawOcrText();
+    manualTextInput.value = originalOcrText;
+    updateOutputStats();
+    updateChangeCount();
+    syncControlsFromState();
+    renderPreviews();
+    setStudioState(originalOcrText ? "Loaded OCR text" : "Waiting for OCR");
+  </script>
+</body>
+</html>
+
+

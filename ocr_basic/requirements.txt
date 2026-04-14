@@ -1,0 +1,11 @@
+Flask==3.1.2
+Werkzeug==3.1.5
+gunicorn==23.0.0
+opencv-python-headless==4.13.0.92
+numpy==2.2.6
+Pillow==12.1.1
+
+# Optional for document type classifier support in production.
+# Uncomment if you need classifier predictions on Render.
+# torch==2.10.0
+# torchvision==0.25.0

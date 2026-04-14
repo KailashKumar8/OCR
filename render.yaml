@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: ocr-basic
+    env: python
+    plan: free
+    rootDir: ocr_basic
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 180
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: OCR_PROVIDER
+        value: openai
+      - key: OCR_MODEL
+        value: gpt-4.1
+      - key: OCR_ENGINE
+        value: openai
+      - key: OCR_API_KEY
+        sync: false
