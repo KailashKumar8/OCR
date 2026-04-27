@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -120,6 +120,75 @@
       background:
         linear-gradient(120deg, rgba(117, 249, 255, 0.08), transparent 36%),
         linear-gradient(300deg, rgba(255, 200, 124, 0.08), transparent 34%);
+    }
+
+    .title-bar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 22px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(2, 8, 20, 0.68);
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      font-family: "Orbitron", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.88rem;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .brand-mark span {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 18px rgba(117, 249, 255, 0.85);
+      flex: 0 0 auto;
+    }
+
+    .auth-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .auth-status {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.3;
+    }
+
+    .auth-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 9px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(117, 249, 255, 0.38);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 700;
+      background: rgba(117, 249, 255, 0.08);
+      transition: transform var(--ease), border-color var(--ease), background var(--ease);
+    }
+
+    .auth-link.primary {
+      border-color: rgba(255, 200, 124, 0.7);
+      color: #07101f;
+      background: linear-gradient(135deg, var(--amber), #ffe3a8);
     }
 
     .hero {
@@ -1008,6 +1077,10 @@
       padding: 0 20px 22px;
     }
 
+    .matching-notes-studio {
+      padding: 0 20px 22px;
+    }
+
     .studio-grid {
       display: grid;
       grid-template-columns: 1.15fr 0.95fr 1.1fr;
@@ -1015,9 +1088,19 @@
       align-items: start;
     }
 
+    .notes-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.78fr 1.1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
     .studio-editor,
     .studio-controls,
-    .studio-previews {
+    .studio-previews,
+    .notes-editor,
+    .notes-controls,
+    .notes-preview {
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 12px;
       background: rgba(6, 12, 30, 0.72);
@@ -1025,9 +1108,13 @@
       min-width: 0;
     }
 
-    .manual-textarea {
+    .manual-textarea,
+    .notes-textarea {
       width: 100%;
       min-height: 320px;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      word-break: break-word;
       border-radius: 10px;
       border: 1px solid rgba(117, 249, 255, 0.24);
       background: rgba(4, 10, 24, 0.9);
@@ -1040,17 +1127,26 @@
       outline: none;
     }
 
-    .manual-textarea:focus {
+    .manual-textarea:focus,
+    .notes-textarea:focus {
       border-color: rgba(255, 200, 124, 0.62);
       box-shadow: 0 0 0 1px rgba(255, 200, 124, 0.3);
     }
 
-    .studio-actions {
+    .studio-actions,
+    .notes-actions {
       margin-top: 10px;
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       align-items: center;
+    }
+
+    .notes-control-copy {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.55;
     }
 
     .canvas-wrap {
@@ -1149,15 +1245,27 @@
     @media (max-width: 1060px) {
       .hero-grid,
       .content,
-      .studio-grid {
+      .studio-grid,
+      .notes-grid {
         grid-template-columns: 1fr;
       }
     }
 
     @media (max-width: 760px) {
+      .title-bar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .auth-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
       .hero,
       .content,
-      .manual-studio {
+      .manual-studio,
+      .matching-notes-studio {
         padding: 16px;
       }
 
@@ -1194,6 +1302,20 @@
   </div>
 
   <main class="app">
+    <header class="title-bar">
+      <a class="brand-mark" href="{{ url_for('home') }}"><span></span> Quantum OCR Deck</a>
+      <nav class="auth-actions" aria-label="Account">
+        {% if current_user %}
+          <span class="auth-status">Logged in as {{ current_user["username"] }}</span>
+          <a class="auth-link" href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+          <span class="auth-status">{{ guest_runs_remaining }} of {{ guest_ocr_limit }} free OCR scans left</span>
+          <a class="auth-link" href="{{ url_for('login') }}">Log In</a>
+          <a class="auth-link primary" href="{{ url_for('signup') }}">Sign Up</a>
+        {% endif %}
+      </nav>
+    </header>
+
     <section class="hero">
       <div class="hero-grid">
         <div>
@@ -1257,6 +1379,7 @@
           <div class="action-row">
             <button type="button" class="btn btn-accent" id="copyRawBtn">Copy OCR Text</button>
             <button type="button" class="btn btn-manual-main" id="openManualStudioBtn">Open Manual Edit Studio</button>
+            <button type="button" class="btn btn-secondary" id="openMatchingNotesBtn">Matching Notes</button>
             <a
               class="btn btn-download {{ 'is-hidden' if not report_file else '' }}"
               href="{{ '/uploads/' + report_file if report_file else '#' }}"
@@ -1382,12 +1505,19 @@
                     </select>
                   </div>
                   <div class="style-item">
-                    <label for="inkColorPicker">Ink Color</label>
-                    <input type="color" id="inkColorPicker" value="#1f3550">
+                    <label for="samplePresetSelect">Human Sample</label>
+                    <select id="samplePresetSelect">
+                      <option value="neat">Neat Class Notes</option>
+                      <option value="cursive">Quick Cursive</option>
+                      <option value="rounded">Rounded Notebook</option>
+                      <option value="exam">Exam Speed</option>
+                      <option value="pencil">Soft Pencil</option>
+                      <option value="custom">Custom</option>
+                    </select>
                   </div>
                   <div class="style-item">
-                    <label for="sampleUpload">User Handwriting Samples</label>
-                    <input type="file" id="sampleUpload" accept=".png,.jpg,.jpeg" multiple>
+                    <label for="inkColorPicker">Ink Color</label>
+                    <input type="color" id="inkColorPicker" value="#1f3550">
                   </div>
                   <div class="style-item">
                     <label for="sizeRange">Font Size</label>
@@ -1421,10 +1551,6 @@
                   </div>
                 </div>
 
-                <div class="style-actions">
-                  <button type="button" class="mini-btn primary" id="matchStyleBtn">Match My Handwriting</button>
-                  <span class="status-note" id="styleStatus">Upload sample(s), then click match.</span>
-                </div>
               </div>
             </div>
 
@@ -1453,6 +1579,63 @@
         </div>
       </article>
     </section>
+
+    <section class="matching-notes-studio" id="matchingNotesStudio">
+      <article class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Matching Notes</h2>
+          <span class="live-chip" id="matchingNotesState">Selection Ready</span>
+        </div>
+
+        <div class="panel-body">
+          <div class="notes-grid">
+            <div class="notes-editor">
+              <div class="frame-label">Matching Notes Output</div>
+              <textarea id="matchingNotesTextInput" class="notes-textarea" wrap="soft" placeholder="Your note text appears here. Select exact words or phrases with the mouse, then style them."></textarea>
+              <div class="notes-actions">
+                <button type="button" class="mini-btn primary" id="syncMatchingNotesBtn">Use Manual Text</button>
+                <button type="button" class="mini-btn" id="copyMatchingNotesBtn">Copy Notes Text</button>
+                <span class="status-note">Styled: <strong id="matchingStyleCount">0 selections</strong></span>
+              </div>
+            </div>
+
+            <div class="notes-controls">
+              <div class="frame-label">Selection Commands</div>
+              <p class="notes-control-copy">Highlight any exact topic, subtopic, word, or phrase in the notes output. The highlighted blue selection is the only part that changes.</p>
+              <div class="style-item" style="margin-bottom:10px;">
+                <label for="matchingPageSelect">Page Type</label>
+                <select id="matchingPageSelect">
+                  <option value="ruled">Ruled Page</option>
+                  <option value="four-line">Four-Line Page</option>
+                  <option value="margin">Margined Page</option>
+                  <option value="unruled">Unruled Page</option>
+                </select>
+              </div>
+              <div class="notes-actions">
+                <button type="button" class="mini-btn primary" id="matchingHeadingBtn">Heading</button>
+                <button type="button" class="mini-btn" id="matchingSubheadingBtn">Sub Heading</button>
+                <button type="button" class="mini-btn" id="matchingBoldBtn">Bold</button>
+                <button type="button" class="mini-btn" id="matchingNormalBtn">Normal</button>
+                <button type="button" class="mini-btn warn" id="matchingAutoBtn">Auto Match</button>
+                <button type="button" class="mini-btn" id="matchingClearBtn">Clear Styles</button>
+              </div>
+            </div>
+
+            <div class="notes-preview">
+              <div class="frame">
+                <div class="frame-label">Matching Notes Preview</div>
+                <a href="#" target="_blank" rel="noopener noreferrer" id="matchingNotesPreviewOpen" class="image-link">
+                  <div class="canvas-wrap">
+                    <canvas id="matchingNotesCanvas" width="980" height="620" aria-label="Matching notes handwriting preview"></canvas>
+                  </div>
+                </a>
+                <a href="#" id="downloadMatchingNotesImage" class="open-full" download="matching_notes_preview.png">Download Matching Notes</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
   </main>
 
   <script>
@@ -1472,8 +1655,10 @@
     const resultText = document.getElementById("resultText");
     const copyRawBtn = document.getElementById("copyRawBtn");
     const openManualStudioBtn = document.getElementById("openManualStudioBtn");
+    const openMatchingNotesBtn = document.getElementById("openMatchingNotesBtn");
 
     const manualStudio = document.getElementById("manualStudio");
+    const matchingNotesStudio = document.getElementById("matchingNotesStudio");
     const manualTextInput = document.getElementById("manualTextInput");
     const copyEditedBtn = document.getElementById("copyEditedBtn");
     const resetEditedBtn = document.getElementById("resetEditedBtn");
@@ -1482,8 +1667,8 @@
     const studioState = document.getElementById("studioState");
 
     const fontSelect = document.getElementById("fontSelect");
+    const samplePresetSelect = document.getElementById("samplePresetSelect");
     const inkColorPicker = document.getElementById("inkColorPicker");
-    const sampleUpload = document.getElementById("sampleUpload");
     const sizeRange = document.getElementById("sizeRange");
     const slantRange = document.getElementById("slantRange");
     const lineGapRange = document.getElementById("lineGapRange");
@@ -1496,8 +1681,6 @@
     const jitterValue = document.getElementById("jitterValue");
     const opacityValue = document.getElementById("opacityValue");
     const weightValue = document.getElementById("weightValue");
-    const matchStyleBtn = document.getElementById("matchStyleBtn");
-    const styleStatus = document.getElementById("styleStatus");
 
     const editedTextCanvas = document.getElementById("editedTextCanvas");
     const editedPreviewOpen = document.getElementById("editedPreviewOpen");
@@ -1506,6 +1689,21 @@
     const appliedPreviewOpen = document.getElementById("appliedPreviewOpen");
     const downloadAppliedImage = document.getElementById("downloadAppliedImage");
     const annotatedImageView = document.getElementById("annotatedImageView");
+    const matchingNotesTextInput = document.getElementById("matchingNotesTextInput");
+    const matchingNotesState = document.getElementById("matchingNotesState");
+    const matchingStyleCount = document.getElementById("matchingStyleCount");
+    const syncMatchingNotesBtn = document.getElementById("syncMatchingNotesBtn");
+    const copyMatchingNotesBtn = document.getElementById("copyMatchingNotesBtn");
+    const matchingHeadingBtn = document.getElementById("matchingHeadingBtn");
+    const matchingSubheadingBtn = document.getElementById("matchingSubheadingBtn");
+    const matchingBoldBtn = document.getElementById("matchingBoldBtn");
+    const matchingNormalBtn = document.getElementById("matchingNormalBtn");
+    const matchingAutoBtn = document.getElementById("matchingAutoBtn");
+    const matchingClearBtn = document.getElementById("matchingClearBtn");
+    const matchingPageSelect = document.getElementById("matchingPageSelect");
+    const matchingNotesCanvas = document.getElementById("matchingNotesCanvas");
+    const matchingNotesPreviewOpen = document.getElementById("matchingNotesPreviewOpen");
+    const downloadMatchingNotesImage = document.getElementById("downloadMatchingNotesImage");
 
     const charCount = document.getElementById("charCount");
     const wordCount = document.getElementById("wordCount");
@@ -1513,6 +1711,7 @@
 
     const styleState = {
       font: "Caveat",
+      samplePreset: "neat",
       color: "#1f3550",
       size: 40,
       slant: -4,
@@ -1520,9 +1719,19 @@
       jitter: 1,
       opacity: 92,
       weight: 700,
+      letterGap: 0.4,
+    };
+
+    const handwritingPresets = {
+      neat: { font: "Kalam", color: "#203a59", size: 38, slant: -2, lineGap: 46, jitter: 0.8, opacity: 94, weight: 650, letterGap: 0.3 },
+      cursive: { font: "Caveat", color: "#1c3454", size: 42, slant: -11, lineGap: 44, jitter: 1.8, opacity: 90, weight: 700, letterGap: -0.2 },
+      rounded: { font: "Patrick Hand", color: "#293756", size: 39, slant: 1, lineGap: 48, jitter: 1.1, opacity: 92, weight: 650, letterGap: 0.6 },
+      exam: { font: "Shadows Into Light", color: "#26314e", size: 36, slant: 7, lineGap: 42, jitter: 2.6, opacity: 88, weight: 700, letterGap: 0 },
+      pencil: { font: "Kalam", color: "#4a4f58", size: 37, slant: -1, lineGap: 47, jitter: 1.4, opacity: 72, weight: 550, letterGap: 0.4 },
     };
 
     let originalOcrText = "";
+    let matchingNoteStyles = [];
 
     function getRawOcrText() {
       const raw = (resultText?.innerText || "").replace(/\u00A0/g, " ").trim();
@@ -1569,6 +1778,7 @@
 
     function syncControlsFromState() {
       fontSelect.value = styleState.font;
+      samplePresetSelect.value = styleState.samplePreset;
       inkColorPicker.value = styleState.color;
       sizeRange.value = String(styleState.size);
       slantRange.value = String(styleState.slant);
@@ -1579,8 +1789,33 @@
       updateStyleLabels();
     }
 
-    function readStyleFromControls() {
+    function applyHandwritingPreset(presetName) {
+      const preset = handwritingPresets[presetName];
+      if (!preset) {
+        return;
+      }
+      Object.assign(styleState, preset, { samplePreset: presetName });
+      syncControlsFromState();
+      renderPreviews();
+      renderMatchingNotesPreview();
+      setStudioState("Human sample selected");
+      setMatchingNotesState("Human sample selected");
+    }
+
+    function readStyleFromControls(event) {
+      if (event?.target === samplePresetSelect) {
+        if (samplePresetSelect.value === "custom") {
+          styleState.samplePreset = samplePresetSelect.value;
+          syncControlsFromState();
+          return;
+        }
+        applyHandwritingPreset(samplePresetSelect.value);
+        return;
+      }
+
       styleState.font = fontSelect.value;
+      styleState.samplePreset = "custom";
+      samplePresetSelect.value = "custom";
       styleState.color = inkColorPicker.value;
       styleState.size = Number(sizeRange.value);
       styleState.slant = Number(slantRange.value);
@@ -1590,6 +1825,7 @@
       styleState.weight = Number(weightRange.value);
       updateStyleLabels();
       renderPreviews();
+      renderMatchingNotesPreview();
     }
 
     function hexToRgba(hex, alpha) {
@@ -1689,58 +1925,10 @@
     }
 
     function renderAppliedPreview(text) {
-      const ctx = appliedImageCanvas.getContext("2d");
-      const width = 980;
-      const height = 620;
-      appliedImageCanvas.width = width;
-      appliedImageCanvas.height = height;
-
-      const drawFallback = () => {
-        renderHandwriting(appliedImageCanvas, text || "No OCR image available yet.");
-        const data = appliedImageCanvas.toDataURL("image/png");
-        appliedPreviewOpen.href = data;
-        downloadAppliedImage.href = data;
-      };
-
-      if (!annotatedImageView || !annotatedImageView.src) {
-        drawFallback();
-        return;
-      }
-
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        ctx.fillStyle = "#0b142b";
-        ctx.fillRect(0, 0, width, height);
-
-        const scale = Math.min(width / img.width, height / img.height);
-        const drawW = img.width * scale;
-        const drawH = img.height * scale;
-        const x = (width - drawW) / 2;
-        const y = (height - drawH) / 2;
-        ctx.drawImage(img, x, y, drawW, drawH);
-
-        const overlayH = Math.min(250, Math.max(150, height * 0.33));
-        const overlayY = height - overlayH - 12;
-
-        ctx.fillStyle = "rgba(248, 243, 228, 0.92)";
-        ctx.fillRect(18, overlayY, width - 36, overlayH);
-        ctx.strokeStyle = "rgba(34, 61, 92, 0.28)";
-        ctx.strokeRect(18, overlayY, width - 36, overlayH);
-
-        const tempCanvas = document.createElement("canvas");
-        tempCanvas.width = width - 56;
-        tempCanvas.height = overlayH - 20;
-        renderHandwriting(tempCanvas, text || "No edited text.");
-        ctx.drawImage(tempCanvas, 28, overlayY + 10, width - 56, overlayH - 20);
-
-        const data = appliedImageCanvas.toDataURL("image/png");
-        appliedPreviewOpen.href = data;
-        downloadAppliedImage.href = data;
-      };
-
-      img.onerror = drawFallback;
-      img.src = annotatedImageView.src;
+      renderHandwriting(appliedImageCanvas, text || "No edited text.");
+      const data = appliedImageCanvas.toDataURL("image/png");
+      appliedPreviewOpen.href = data;
+      downloadAppliedImage.href = data;
     }
 
     function renderPreviews() {
@@ -1759,6 +1947,290 @@
 
     function clamp(value, min, max) {
       return Math.min(max, Math.max(min, value));
+    }
+
+    function setMatchingNotesState(text) {
+      matchingNotesState.innerText = text;
+    }
+
+    function getMatchingNotesText() {
+      return (matchingNotesTextInput.value || "").replace(/\r\n/g, "\n").trim();
+    }
+
+    function updateMatchingStyleCount() {
+      const count = matchingNoteStyles.length;
+      matchingStyleCount.innerText = `${count} selection${count === 1 ? "" : "s"}`;
+    }
+
+    function noteFontForStyle(styleName) {
+      if (styleName === "heading") {
+        return { size: styleState.size + 12, weight: 800, gap: 12 };
+      }
+      if (styleName === "subheading") {
+        return { size: styleState.size + 6, weight: 760, gap: 7 };
+      }
+      if (styleName === "bold") {
+        return { size: styleState.size, weight: Math.max(760, styleState.weight + 100), gap: 0 };
+      }
+      return { size: styleState.size, weight: styleState.weight, gap: 0 };
+    }
+
+    function matchingStyleAt(index) {
+      for (let i = matchingNoteStyles.length - 1; i >= 0; i--) {
+        const range = matchingNoteStyles[i];
+        if (index >= range.start && index < range.end) {
+          return range.styleName;
+        }
+      }
+      return "normal";
+    }
+
+    function addStyledSegment(segments, char, styleName) {
+      const previous = segments[segments.length - 1];
+      if (previous && previous.styleName === styleName) {
+        previous.text += char;
+      } else {
+        segments.push({ text: char, styleName });
+      }
+    }
+
+    function wrapMatchingSegments(ctx, text, maxWidth) {
+      const lines = [];
+      let segments = [];
+      let lineWidth = 0;
+
+      function pushLine() {
+        lines.push({ segments });
+        segments = [];
+        lineWidth = 0;
+      }
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (char === "\n") {
+          pushLine();
+          continue;
+        }
+
+        const styleName = matchingStyleAt(i);
+        const noteFont = noteFontForStyle(styleName);
+        ctx.font = `${noteFont.weight} ${noteFont.size}px '${styleState.font}', cursive`;
+        const charWidth = ctx.measureText(char).width + (Number(styleState.letterGap) || 0);
+
+        if (lineWidth + charWidth > maxWidth && segments.length) {
+          pushLine();
+        }
+        addStyledSegment(segments, char, styleName);
+        lineWidth += charWidth;
+      }
+
+      if (segments.length || !lines.length) {
+        pushLine();
+      }
+      return lines;
+    }
+
+    function matchingLineMetrics(line) {
+      return line.segments.reduce((metrics, segment) => {
+        const noteFont = noteFontForStyle(segment.styleName);
+        return {
+          size: Math.max(metrics.size, noteFont.size),
+          gap: Math.max(metrics.gap, noteFont.gap),
+        };
+      }, { size: styleState.size, gap: 0 });
+    }
+
+    function drawMatchingSegment(ctx, text, baseX, baseY, lineIndex, slantTan) {
+      let x = baseX;
+      [...text].forEach((char, charIndex) => {
+        const wobble = lineNoise(lineIndex * 97 + charIndex, styleState.jitter * 0.8);
+        const pressure = 1 + lineNoise(lineIndex * 53 + charIndex, 0.04);
+
+        ctx.save();
+        ctx.translate(x, baseY + wobble);
+        ctx.transform(1, 0, slantTan, 1, 0, 0);
+        ctx.globalAlpha = clamp((styleState.opacity / 100) * pressure, 0.25, 1);
+        ctx.fillText(char, 0, 0);
+        ctx.restore();
+
+        x += ctx.measureText(char).width + lineNoise(lineIndex * 31 + charIndex, 0.25);
+      });
+      return x - baseX;
+    }
+
+    function drawMatchingPaper(ctx, width, height, padX, padTop, lineGap) {
+      const pageType = matchingPageSelect.value || "ruled";
+      ctx.fillStyle = "#f8f3e4";
+      ctx.fillRect(0, 0, width, height);
+
+      if (pageType === "unruled") {
+        return;
+      }
+
+      const blueLine = "rgba(98, 145, 201, 0.22)";
+      const softBlueLine = "rgba(98, 145, 201, 0.14)";
+      ctx.lineWidth = 1;
+
+      if (pageType === "four-line") {
+        const subGap = Math.max(8, Math.round(lineGap / 4));
+        for (let y = padTop - subGap; y < height; y += lineGap) {
+          for (let i = 0; i < 4; i++) {
+            ctx.beginPath();
+            ctx.strokeStyle = i === 2 ? blueLine : softBlueLine;
+            ctx.moveTo(0, y + i * subGap);
+            ctx.lineTo(width, y + i * subGap);
+            ctx.stroke();
+          }
+        }
+      } else {
+        ctx.strokeStyle = blueLine;
+        for (let y = padTop + 12; y < height; y += lineGap) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(width, y);
+          ctx.stroke();
+        }
+      }
+
+      if (pageType === "margin" || pageType === "four-line") {
+        ctx.strokeStyle = "rgba(220, 93, 93, 0.36)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(padX - 20, 0);
+        ctx.lineTo(padX - 20, height);
+        ctx.stroke();
+      }
+    }
+
+    function renderMatchingNotesPreview() {
+      const ctx = matchingNotesCanvas.getContext("2d");
+      const width = 980;
+      const padX = 76;
+      const padTop = 68;
+      const lineGap = styleState.lineGap;
+      const maxWidth = width - padX * 2;
+      const text = getMatchingNotesText() || "Select text in Matching Notes Output and style it here.";
+
+      ctx.font = `${styleState.weight} ${styleState.size}px '${styleState.font}', cursive`;
+      const lines = wrapMatchingSegments(ctx, text, maxWidth);
+      const contentHeight = lines.reduce((total, line) => {
+        const metrics = matchingLineMetrics(line);
+        return total + (line.segments.length ? Math.max(lineGap, metrics.size + 7) + metrics.gap : lineGap * 0.7);
+      }, 0);
+      const height = Math.max(620, padTop + contentHeight + 46);
+
+      matchingNotesCanvas.width = width;
+      matchingNotesCanvas.height = height;
+
+      drawMatchingPaper(ctx, width, height, padX, padTop, lineGap);
+
+      const slantTan = Math.tan((styleState.slant * Math.PI) / 180);
+      let y = padTop;
+      lines.forEach((line, idx) => {
+        if (!line.segments.length) {
+          y += lineGap * 0.7;
+          return;
+        }
+
+        const metrics = matchingLineMetrics(line);
+        const lineAdvance = Math.max(lineGap, metrics.size + 7) + metrics.gap;
+        let x = padX + lineNoise(idx, styleState.jitter);
+        const jitterY = lineNoise(idx + 41, styleState.jitter * 0.5);
+
+        line.segments.forEach((segment, segmentIndex) => {
+          const noteFont = noteFontForStyle(segment.styleName);
+          ctx.fillStyle = hexToRgba(styleState.color, styleState.opacity / 100);
+          ctx.font = `${noteFont.weight} ${noteFont.size}px '${styleState.font}', cursive`;
+          x += drawMatchingSegment(ctx, segment.text, x, y + jitterY, idx + segmentIndex / 10, slantTan);
+        });
+
+        y += lineAdvance;
+      });
+
+      const data = matchingNotesCanvas.toDataURL("image/png");
+      matchingNotesPreviewOpen.href = data;
+      downloadMatchingNotesImage.href = data;
+    }
+
+    function applyMatchingNoteStyle(styleName) {
+      const value = matchingNotesTextInput.value || "";
+      let start = matchingNotesTextInput.selectionStart ?? 0;
+      let end = matchingNotesTextInput.selectionEnd ?? start;
+
+      if (start === end) {
+        const before = value.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
+        const after = value.indexOf("\n", start);
+        start = before;
+        end = after === -1 ? value.length : after;
+      }
+
+      const from = Math.min(start, end);
+      const to = Math.max(start, end);
+      if (from === to) {
+        setMatchingNotesState("Select Text First");
+        matchingNotesTextInput.focus({ preventScroll: true });
+        return;
+      }
+
+      const nextStyles = [];
+      matchingNoteStyles.forEach((range) => {
+        if (range.end <= from || range.start >= to) {
+          nextStyles.push(range);
+          return;
+        }
+        if (range.start < from) {
+          nextStyles.push({ start: range.start, end: from, styleName: range.styleName });
+        }
+        if (range.end > to) {
+          nextStyles.push({ start: to, end: range.end, styleName: range.styleName });
+        }
+      });
+
+      if (styleName !== "normal") {
+        nextStyles.push({ start: from, end: to, styleName });
+      }
+
+      matchingNoteStyles = nextStyles
+        .filter((range) => range.start < range.end)
+        .sort((a, b) => a.start - b.start);
+
+      updateMatchingStyleCount();
+      renderMatchingNotesPreview();
+      matchingNotesTextInput.setSelectionRange(from, to);
+      matchingNotesTextInput.focus({ preventScroll: true });
+      setMatchingNotesState("Selection Styled");
+    }
+
+    function autoMatchMatchingNotes() {
+      const value = matchingNotesTextInput.value || "";
+      const lines = value.replace(/\r\n/g, "\n").split("\n");
+      matchingNoteStyles = [];
+      let offset = 0;
+
+      lines.forEach((line) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          offset += line.length + 1;
+          return;
+        }
+        const words = trimmed.split(/\s+/).length;
+        const looksNumbered = /^(\d+[\).]|[A-Z][\).]|[IVX]+[\).])\s+/.test(trimmed);
+        const endsWithColon = trimmed.endsWith(":");
+        const mostlyUpper = trimmed.length > 3 && trimmed === trimmed.toUpperCase() && /[A-Z]/.test(trimmed);
+        const start = offset + line.indexOf(trimmed);
+        const end = start + trimmed.length;
+
+        if (mostlyUpper || (words <= 5 && (endsWithColon || looksNumbered))) {
+          matchingNoteStyles.push({ start, end, styleName: "heading" });
+        } else if (endsWithColon || looksNumbered || words <= 7) {
+          matchingNoteStyles.push({ start, end, styleName: "subheading" });
+        }
+        offset += line.length + 1;
+      });
+
+      updateMatchingStyleCount();
+      renderMatchingNotesPreview();
+      setMatchingNotesState("Auto Matched");
     }
 
     function analyzeSampleImage(file) {
@@ -1851,6 +2323,7 @@
     }
 
     function applyMatchedStyle(metrics) {
+      styleState.samplePreset = "matched";
       styleState.slant = Math.round(clamp(metrics.angle * 0.7, -18, 18));
       styleState.opacity = Math.round(clamp(70 + metrics.darkness * 34 + metrics.darkRatio * 120, 45, 100));
       styleState.jitter = Number(clamp(metrics.roughness / 55, 0.2, 5.4).toFixed(1));
@@ -1951,7 +2424,20 @@
 
     openManualStudioBtn.addEventListener("click", () => {
       manualStudio.scrollIntoView({ behavior: "smooth", block: "start" });
-      manualTextInput.focus();
+      window.setTimeout(() => {
+        manualTextInput.focus({ preventScroll: true });
+      }, 650);
+    });
+
+    openMatchingNotesBtn.addEventListener("click", () => {
+      if (!getMatchingNotesText()) {
+        matchingNotesTextInput.value = getEditedText() || getRawOcrText();
+        renderMatchingNotesPreview();
+      }
+      matchingNotesStudio.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.setTimeout(() => {
+        matchingNotesTextInput.focus({ preventScroll: true });
+      }, 650);
     });
 
     copyEditedBtn.addEventListener("click", async () => {
@@ -1975,57 +2461,55 @@
       setStudioState("Applied on image");
     });
 
+    syncMatchingNotesBtn.addEventListener("click", () => {
+      matchingNotesTextInput.value = getEditedText() || getRawOcrText();
+      matchingNoteStyles = [];
+      updateMatchingStyleCount();
+      renderMatchingNotesPreview();
+      setMatchingNotesState("Manual Text Loaded");
+    });
+
+    copyMatchingNotesBtn.addEventListener("click", async () => {
+      const content = getMatchingNotesText();
+      if (!content) return;
+      await navigator.clipboard.writeText(content);
+      const original = copyMatchingNotesBtn.innerText;
+      copyMatchingNotesBtn.innerText = "Copied";
+      setTimeout(() => { copyMatchingNotesBtn.innerText = original; }, 1200);
+    });
+
+    matchingNotesTextInput.addEventListener("input", () => {
+      renderMatchingNotesPreview();
+      setMatchingNotesState("Editing Notes");
+    });
+
+    matchingHeadingBtn.addEventListener("click", () => applyMatchingNoteStyle("heading"));
+    matchingSubheadingBtn.addEventListener("click", () => applyMatchingNoteStyle("subheading"));
+    matchingBoldBtn.addEventListener("click", () => applyMatchingNoteStyle("bold"));
+    matchingNormalBtn.addEventListener("click", () => applyMatchingNoteStyle("normal"));
+    matchingAutoBtn.addEventListener("click", autoMatchMatchingNotes);
+    matchingClearBtn.addEventListener("click", () => {
+      matchingNoteStyles = [];
+      updateMatchingStyleCount();
+      renderMatchingNotesPreview();
+      setMatchingNotesState("Styles Cleared");
+    });
+    matchingPageSelect.addEventListener("change", () => {
+      renderMatchingNotesPreview();
+      setMatchingNotesState("Page Changed");
+    });
+
     manualTextInput.addEventListener("input", () => {
       updateChangeCount();
       renderPreviews();
       setStudioState("Editing");
     });
 
-    [fontSelect, inkColorPicker, sizeRange, slantRange, lineGapRange, jitterRange, opacityRange, weightRange]
+    [fontSelect, samplePresetSelect, inkColorPicker, sizeRange, slantRange, lineGapRange, jitterRange, opacityRange, weightRange]
       .forEach((el) => {
         el.addEventListener("input", readStyleFromControls);
         el.addEventListener("change", readStyleFromControls);
       });
-
-    matchStyleBtn.addEventListener("click", async () => {
-      const files = sampleUpload.files || [];
-      if (!files.length) {
-        styleStatus.innerText = "Please upload at least one sample first.";
-        setStudioState("Need sample");
-        return;
-      }
-
-      try {
-        let agg = { angle: 0, bboxW: 0, bboxH: 0, darkRatio: 0, darkness: 0, roughness: 0 };
-        let used = 0;
-        for (let i = 0; i < Math.min(files.length, 3); i++) {
-          const m = await analyzeSampleImage(files[i]);
-          agg.angle += m.angle;
-          agg.bboxW += m.bboxW;
-          agg.bboxH += m.bboxH;
-          agg.darkRatio += m.darkRatio;
-          agg.darkness += m.darkness;
-          agg.roughness += m.roughness;
-          used++;
-        }
-
-        const avg = {
-          angle: agg.angle / used,
-          bboxW: agg.bboxW / used,
-          bboxH: agg.bboxH / used,
-          darkRatio: agg.darkRatio / used,
-          darkness: agg.darkness / used,
-          roughness: agg.roughness / used,
-        };
-
-        applyMatchedStyle(avg);
-        styleStatus.innerText = `Matched ${used} sample(s). Slant ${styleState.slant} deg, opacity ${styleState.opacity}%.`;
-        setStudioState("Style matched");
-      } catch (err) {
-        styleStatus.innerText = `Match failed: ${err.message}`;
-        setStudioState("Match failed");
-      }
-    });
 
     if (annotatedImageView) {
       annotatedImageView.addEventListener("load", () => {
@@ -2035,11 +2519,15 @@
 
     originalOcrText = getRawOcrText();
     manualTextInput.value = originalOcrText;
+    matchingNotesTextInput.value = originalOcrText;
     updateOutputStats();
     updateChangeCount();
+    updateMatchingStyleCount();
     syncControlsFromState();
     renderPreviews();
+    renderMatchingNotesPreview();
     setStudioState(originalOcrText ? "Loaded OCR text" : "Waiting for OCR");
+    setMatchingNotesState(originalOcrText ? "Loaded OCR text" : "Waiting for notes");
   </script>
 </body>
 </html>

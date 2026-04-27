@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - Quantum OCR Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-0: #03060d;
+      --bg-1: #081024;
+      --panel: rgba(8, 18, 42, 0.84);
+      --line: rgba(117, 249, 255, 0.3);
+      --text: #eef7ff;
+      --muted: #9db4d8;
+      --cyan: #75f9ff;
+      --amber: #ffc87c;
+      --rose: #ff8a8a;
+      --shadow: 0 26px 64px rgba(0, 0, 0, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      color: var(--text);
+      font-family: "Rajdhani", "Trebuchet MS", sans-serif;
+      background:
+        radial-gradient(circle at 14% 0%, rgba(117, 249, 255, 0.17), transparent 34%),
+        radial-gradient(circle at 94% 12%, rgba(255, 200, 124, 0.14), transparent 30%),
+        linear-gradient(160deg, var(--bg-0), var(--bg-1));
+    }
+
+    .auth-card {
+      width: min(460px, 100%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      padding: 28px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)), var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--cyan);
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      font-size: 0.82rem;
+    }
+
+    .brand span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 18px rgba(117, 249, 255, 0.85);
+    }
+
+    h1 {
+      margin: 18px 0 8px;
+      font-family: "Orbitron", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 1.8rem;
+    }
+
+    p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.78rem;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 13px;
+      color: var(--text);
+      background: rgba(3, 10, 24, 0.78);
+      font: inherit;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: rgba(117, 249, 255, 0.78);
+      box-shadow: 0 0 0 3px rgba(117, 249, 255, 0.12);
+    }
+
+    .message {
+      margin: 0 0 14px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 138, 138, 0.38);
+      background: rgba(255, 138, 138, 0.08);
+      color: var(--rose);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    button,
+    .link-btn {
+      min-height: 42px;
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 16px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    button {
+      color: #07101f;
+      background: linear-gradient(135deg, var(--amber), #ffe3a8);
+      box-shadow: 0 12px 28px rgba(255, 200, 124, 0.22);
+    }
+
+    .link-btn {
+      color: var(--text);
+      border: 1px solid rgba(117, 249, 255, 0.36);
+      background: rgba(117, 249, 255, 0.08);
+    }
+
+    .small-link {
+      display: inline-block;
+      margin-top: 18px;
+      color: var(--cyan);
+      font-weight: 700;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="auth-card">
+    <a class="brand" href="{{ url_for('home') }}"><span></span> Quantum OCR Deck</a>
+    <h1>Sign Up</h1>
+    <p>Create an account to keep using OCR after the two guest scans.</p>
+
+    {% if message %}
+      <div class="message">{{ message }}</div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('signup') }}">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" autocomplete="username" minlength="3" required>
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="new-password" minlength="6" required>
+
+      <label for="confirm_password">Confirm Password</label>
+      <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" minlength="6" required>
+
+      <div class="actions">
+        <button type="submit">Create Account</button>
+        <a class="link-btn" href="{{ url_for('home') }}">Use Guest Mode</a>
+      </div>
+    </form>
+
+    <a class="small-link" href="{{ url_for('login') }}">Already have an account? Log in</a>
+  </main>
+</body>
+</html>

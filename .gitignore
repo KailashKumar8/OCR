@@ -15,8 +15,11 @@ ocr_basic/.venv/
 ocr_basic/uploads/
 ocr_basic/outputs/
 ocr_basic/__pycache__/
+ocr_basic/.env
+ocr_basic/users.db
 ocr_basic/server_stdout.log
 ocr_basic/server_stderr.log
+*.zip
 
 # Large local datasets not needed for Render runtime
 ocr_basic/train_data/

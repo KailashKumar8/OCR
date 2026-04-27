@@ -1,24 +1,29 @@
 import os
+import sqlite3
 import time
 from datetime import datetime
 from pathlib import Path
 
 import cv2
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, redirect, render_template, request, send_from_directory, session, url_for
 from werkzeug.utils import secure_filename
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from ocr_pipeline import build_preprocess_variants
 from openai_ocr import extract_text_with_chatgpt, normalize_chatgpt_ocr_text
 from report_utils import create_ocr_report_pdf
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "dev-login-secret-change-me")
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_FOLDER = BASE_DIR / "uploads"
+DB_PATH = BASE_DIR / "users.db"
 ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg"}
 OCR_ENGINE = (os.environ.get("OCR_ENGINE", "openai") or "openai").strip().lower()
+GUEST_OCR_LIMIT = 2
 _document_classifier = None
 _document_classifier_checked = False
 _predict_document_type = None
@@ -26,6 +31,71 @@ _document_classifier_mtime = None
 
 # create uploads folder if missing
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
+def init_user_db():
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+
+
+def get_user_by_username(username: str):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        return conn.execute(
+            "SELECT id, username, password_hash FROM users WHERE lower(username) = lower(?)",
+            (username,),
+        ).fetchone()
+
+
+def get_user_by_id(user_id: int):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        return conn.execute(
+            "SELECT id, username FROM users WHERE id = ?",
+            (user_id,),
+        ).fetchone()
+
+
+def create_user(username: str, password: str):
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.execute(
+            "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)",
+            (username, generate_password_hash(password), datetime.now().isoformat(timespec="seconds")),
+        )
+        return cursor.lastrowid
+
+
+def current_user():
+    user_id = session.get("user_id")
+    if not user_id:
+        return None
+    return get_user_by_id(user_id)
+
+
+def guest_runs_used() -> int:
+    return int(session.get("guest_ocr_runs", 0) or 0)
+
+
+def auth_template_context():
+    user = current_user()
+    remaining = max(0, GUEST_OCR_LIMIT - guest_runs_used())
+    return {
+        "current_user": user,
+        "guest_runs_remaining": remaining,
+        "guest_ocr_limit": GUEST_OCR_LIMIT,
+    }
+
+
+init_user_db()
 
 
 @app.after_request
@@ -89,6 +159,7 @@ def render_home(**kwargs):
         "processing_seconds": None,
         "ocr_engine": current_ocr_engine_label(),
     }
+    context.update(auth_template_context())
     context.update(kwargs)
     return render_template("index.html", **context)
 
@@ -96,6 +167,63 @@ def render_home(**kwargs):
 @app.route("/")
 def home():
     return render_home()
+
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if current_user():
+        return redirect(url_for("home"))
+
+    message = ""
+    if request.method == "POST":
+        username = (request.form.get("username") or "").strip()
+        password = request.form.get("password") or ""
+        confirm_password = request.form.get("confirm_password") or ""
+
+        if len(username) < 3:
+            message = "Username must be at least 3 characters."
+        elif len(password) < 6:
+            message = "Password must be at least 6 characters."
+        elif password != confirm_password:
+            message = "Passwords do not match."
+        elif get_user_by_username(username):
+            message = "That username is already registered."
+        else:
+            user_id = create_user(username, password)
+            session.clear()
+            session["user_id"] = user_id
+            return redirect(url_for("home"))
+
+    return render_template("signup.html", message=message, **auth_template_context())
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if current_user():
+        return redirect(url_for("home"))
+
+    message = ""
+    if request.args.get("reason") == "limit":
+        message = "Please log in or sign up to continue after your 2 free OCR scans."
+
+    if request.method == "POST":
+        username = (request.form.get("username") or "").strip()
+        password = request.form.get("password") or ""
+        user = get_user_by_username(username)
+
+        if user and check_password_hash(user["password_hash"], password):
+            session.clear()
+            session["user_id"] = user["id"]
+            return redirect(url_for("home"))
+        message = "Invalid username or password."
+
+    return render_template("login.html", message=message, **auth_template_context())
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("home"))
 
 
 # route to serve images
@@ -113,6 +241,9 @@ def upload():
     if uploaded is None or uploaded.filename == "":
         return render_home(text="No file selected.")
 
+    if not current_user() and guest_runs_used() >= GUEST_OCR_LIMIT:
+        return redirect(url_for("login", reason="limit"))
+
     safe_name = secure_filename(uploaded.filename)
     ext = Path(safe_name).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
@@ -127,6 +258,9 @@ def upload():
     image = cv2.imread(image_path)
     if image is None:
         return render_home(text="Could not read uploaded image.")
+
+    if not current_user():
+        session["guest_ocr_runs"] = guest_runs_used() + 1
 
     process_started = time.perf_counter()
     predicted_document_type = ""
